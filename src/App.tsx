@@ -3,6 +3,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { useAuth } from '@/hooks/useAuth'
 import Onboarding from '@/pages/Onboarding'
 import Login from '@/pages/Login'
+import SignUp from '@/pages/SignUp'
 import MainLayout from '@/layouts/MainLayout'
 import Home from '@/pages/Home'
 import Cards from '@/pages/Cards'
@@ -58,6 +59,12 @@ function App() {
           <Route path="/login" element={
             <PublicRoute>
               <Login />
+            </PublicRoute>
+          } />
+          
+          <Route path="/signup" element={
+            <PublicRoute>
+              <SignUp />
             </PublicRoute>
           } />
           

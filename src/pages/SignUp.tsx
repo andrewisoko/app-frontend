@@ -7,10 +7,12 @@ import Input from '@/components/ui/Input'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, ChevronLeft } from 'lucide-react'
 
-export default function Login() {
+export default function SignUp() {
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const { login } = useAuth()
@@ -18,16 +20,24 @@ export default function Login() {
 
   const handleContinue = () => {
     setError('')
-    if (!email) {
+    if (step === 1 && !email) {
       setError('Please enter your email')
       return
     }
-    setStep(2)
+    if (step === 2 && !firstName) {
+      setError('Please enter your first name')
+      return
+    }
+    if (step === 3 && !lastName) {
+      setError('Please enter your last name')
+      return
+    }
+    setStep(step + 1)
   }
 
   const handleBack = () => {
     setError('')
-    setStep(1)
+    setStep(step - 1)
   }
 
   const handleSubmit = async () => {
@@ -39,11 +49,11 @@ export default function Login() {
 
     setIsLoading(true)
     try {
-      const response = await authService.login({ email, password })
+      const response = await authService.register({ email, password, firstName, lastName })
       login(response.token, response.user)
       navigate('/')
     } catch (err) {
-      setError('Invalid email or password')
+      setError('Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -63,17 +73,17 @@ export default function Login() {
             <Zap className="w-8 h-8 text-primary-600" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">TransAct</h1>
-          <p className="text-white/80">Sign in to continue</p>
+          <p className="text-white/80">Create your account</p>
         </div>
 
-        {/* Login Form */}
+        {/* Sign Up Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
           className="bg-white rounded-3xl p-8 card-shadow relative overflow-hidden"
         >
-          {step === 2 && (
+          {step > 1 && (
             <button
               onClick={handleBack}
               className="absolute top-6 left-6 p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -104,7 +114,7 @@ export default function Login() {
                 >
                   <Input
                     type="email"
-                    label="Email"
+                    label="Email Address"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -130,9 +140,63 @@ export default function Login() {
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
                   <Input
+                    type="text"
+                    label="First Name"
+                    placeholder="John"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full mt-6"
+                    onClick={handleContinue}
+                  >
+                    Continue
+                  </Button>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 300 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -300 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                >
+                  <Input
+                    type="text"
+                    label="Last Name"
+                    placeholder="Doe"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full mt-6"
+                    onClick={handleContinue}
+                  >
+                    Continue
+                  </Button>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div
+                  key="step4"
+                  initial={{ opacity: 0, x: 300 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -300 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                >
+                  <Input
                     type="password"
                     label="Password"
-                    placeholder="Enter your password"
+                    placeholder="Create a strong password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -144,27 +208,21 @@ export default function Login() {
                     onClick={handleSubmit}
                     isLoading={isLoading}
                   >
-                    Sign In
+                    Create Account
                   </Button>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          <div className="mt-6 text-center">
-            <button className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-              Forgot password?
-            </button>
-          </div>
-
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Already have an account?{' '}
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/login')}
                 className="text-primary-600 font-medium hover:text-primary-700 transition-colors"
               >
-                Sign up
+                Sign in
               </button>
             </p>
           </div>

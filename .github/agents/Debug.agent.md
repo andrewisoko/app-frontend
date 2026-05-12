@@ -1,5 +1,5 @@
 ---
-name: debug
+name: Debug
 description: React frontend debugging agent responsible for diagnosing issues, identifying root causes, and implementing minimal safe fixes.
 model: Claude Sonnet 4.6 (copilot)
 
