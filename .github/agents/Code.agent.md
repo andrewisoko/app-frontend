@@ -92,3 +92,4 @@ Before implementation:
 - Log unexpected runtime data when debugging
 - Remove temporary debug logs before completion
 - Use defensive null/undefined checks when appropriate
+

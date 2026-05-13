@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { useAuth } from '@/hooks/useAuth'
+import Welcome from '@/pages/Welcome'
 import Onboarding from '@/pages/Onboarding'
 import Login from '@/pages/Login'
 import SignUp from '@/pages/SignUp'
@@ -50,6 +51,12 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/welcome" element={
+            <PublicRoute>
+              <Welcome />
+            </PublicRoute>
+          } />
+          
           <Route path="/onboarding" element={
             <PublicRoute>
               <Onboarding />
