@@ -11,22 +11,33 @@ export default function Welcome() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const navigate = useNavigate()
 
+  const showContentFallback = () => {
+    setVideoEnded(true)
+    setShowTitle(true)
+    setTimeout(() => {
+      setShowSubtitle(true)
+    }, 1200)
+  }
+
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
     const handleVideoEnd = () => {
-      setVideoEnded(true)
-      // Show title immediately
-      setShowTitle(true)
-      // Show subtitle after 1.2s delay
-      setTimeout(() => {
-        setShowSubtitle(true)
-      }, 1200)
+      showContentFallback()
+    }
+
+    const handleVideoError = () => {
+      // Video failed to load — show content immediately
+      showContentFallback()
     }
 
     video.addEventListener('ended', handleVideoEnd)
-    return () => video.removeEventListener('ended', handleVideoEnd)
+    video.addEventListener('error', handleVideoError)
+    return () => {
+      video.removeEventListener('ended', handleVideoEnd)
+      video.removeEventListener('error', handleVideoError)
+    }
   }, [])
 
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
