@@ -99,7 +99,6 @@ export default function Welcome() {
       }, i * rippleDelay)
     }
 
-    let animationId: number
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
@@ -138,13 +137,13 @@ export default function Welcome() {
       })
 
       if (ripples.length > 0) {
-        animationId = requestAnimationFrame(animate)
+        requestAnimationFrame(animate)
       } else {
         onComplete()
       }
     }
 
-    animationId = requestAnimationFrame(animate)
+    requestAnimationFrame(animate)
   }
 
   return (
