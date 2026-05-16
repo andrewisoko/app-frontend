@@ -2,41 +2,25 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const welcomeCard = '/src/assets/WelcomeCard.jpg.png'
+
 export default function Welcome() {
-  const [videoEnded, setVideoEnded] = useState(false)
+  const [showImage, setShowImage] = useState(false)
   const [showTitle, setShowTitle] = useState(false)
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const navigate = useNavigate()
 
-  const showContentFallback = () => {
-    setVideoEnded(true)
-    setShowTitle(true)
-    setTimeout(() => {
-      setShowSubtitle(true)
-    }, 1200)
-  }
-
   useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    const handleVideoEnd = () => {
-      showContentFallback()
-    }
-
-    const handleVideoError = () => {
-      // Video failed to load — show content immediately
-      showContentFallback()
-    }
-
-    video.addEventListener('ended', handleVideoEnd)
-    video.addEventListener('error', handleVideoError)
+    // Trigger image entrance shortly after mount
+    const t1 = setTimeout(() => setShowImage(true), 200)
+    const t2 = setTimeout(() => setShowTitle(true), 900)
+    const t3 = setTimeout(() => setShowSubtitle(true), 2100)
     return () => {
-      video.removeEventListener('ended', handleVideoEnd)
-      video.removeEventListener('error', handleVideoError)
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
     }
   }, [])
 
@@ -152,18 +136,19 @@ export default function Welcome() {
       onClick={handleScreenClick}
       style={{ fontFamily: '"Inter", sans-serif' }}
     >
-      {/* Fullscreen Background Video */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source src="/src/assets/Video.mov" type="video/quicktime" />
-        <source src="/src/assets/Video.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      {/* Fullscreen Background Image with entrance animation */}
+      <AnimatePresence>
+        {showImage && (
+          <motion.img
+            src={welcomeCard}
+            alt="Transact Card"
+            initial={{ opacity: 0, scale: 1.06 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0 w-full h-full object-contain md:object-cover"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Optional Dark Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
@@ -178,7 +163,7 @@ export default function Welcome() {
               duration: 1.2,
               ease: [0.22, 1, 0.36, 1], // Cinematic easeOut
             }}
-            className="absolute inset-0 flex items-center justify-center"
+            className="absolute inset-0 flex items-start justify-center pt-8 md:pt-20"
           >
             <h1 className="text-5xl md:text-7xl font-bold text-white text-center px-6 tracking-tight">
               Welcome to Transact
