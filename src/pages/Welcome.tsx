@@ -145,7 +145,7 @@ export default function Welcome() {
             initial={{ opacity: 0, scale: 1.06 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 w-full h-full object-contain md:object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
           />
         )}
       </AnimatePresence>
@@ -163,7 +163,7 @@ export default function Welcome() {
               duration: 1.2,
               ease: [0.22, 1, 0.36, 1], // Cinematic easeOut
             }}
-            className="absolute inset-0 flex items-start justify-center pt-8 md:pt-20"
+            className="absolute inset-0 flex items-start justify-center pt-10"
           >
             <h1 className="text-5xl md:text-7xl font-bold text-white text-center px-6 tracking-tight">
               Welcome to Transact
