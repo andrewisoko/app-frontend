@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useWaterRipple } from '../hooks/useWaterRipple'
 
 const welcomeCard = '/src/assets/WelcomeCard.jpg.png'
 
@@ -11,6 +12,15 @@ export default function Welcome() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const navigate = useNavigate()
+
+  // Water ripple effect hook
+  const { canvasRef: waterRippleCanvasRef, createRipple } = useWaterRipple({
+    maxRipples: 15,
+    rippleDuration: 2500,
+    maxRadiusMultiplier: 0.7,
+    rippleColor: [200, 215, 235], // Soft silver-white, blends naturally with background
+    enableHiDPI: true,
+  })
 
   useEffect(() => {
     // Trigger image entrance shortly after mount
@@ -24,8 +34,25 @@ export default function Welcome() {
     }
   }, [])
 
+  /**
+   * Handle interactive water ripple effect
+   * Creates ripples on every click/tap for visual feedback
+   */
+  const handleInteraction = (clientX: number, clientY: number) => {
+    createRipple(clientX, clientY)
+  }
+
+  /**
+   * Handle mouse click - creates water ripple and navigates
+   */
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!showSubtitle || isTransitioning) return
+    // Always create water ripple
+    handleInteraction(e.clientX, e.clientY)
+
+    // Only navigate once the image has appeared and we're not already transitioning.
+    // Using showImage (200ms) rather than showSubtitle (2100ms) so a first click
+    // is never silently ignored when the user taps before the subtitle animates in.
+    if (!showImage || isTransitioning) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -37,13 +64,44 @@ export default function Welcome() {
 
     setIsTransitioning(true)
 
-    // Create ripple effect
+    // Create navigation ripple effect
     createRippleEffect(canvas, x, y, () => {
       // Navigate after ripple completes
       setTimeout(() => {
         navigate('/onboarding')
       }, 300)
     })
+  }
+
+  /**
+   * Handle touch events - creates water ripple on touch
+   * Supports multi-touch for simultaneous ripples
+   */
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    // Create ripple for each touch point
+    Array.from(e.touches).forEach((touch) => {
+      handleInteraction(touch.clientX, touch.clientY)
+    })
+
+    // Trigger navigation only on single touch when ready
+    if (showImage && !isTransitioning && e.touches.length === 1) {
+      const canvas = canvasRef.current
+      if (!canvas) return
+
+      const touch = e.touches[0]
+      const rect = canvas.getBoundingClientRect()
+      const x = touch.clientX - rect.left
+      const y = touch.clientY - rect.top
+
+      setIsTransitioning(true)
+
+      // Create navigation ripple effect
+      createRippleEffect(canvas, x, y, () => {
+        setTimeout(() => {
+          navigate('/onboarding')
+        }, 300)
+      })
+    }
   }
 
   const createRippleEffect = (
@@ -95,14 +153,17 @@ export default function Welcome() {
         if (ripple.opacity > 0) {
           ctx.save()
 
-          // Outer glow
+          // Outer glow - ensure radii are never negative
+          const innerRadius = Math.max(0, ripple.radius - 30)
+          const outerRadius = ripple.radius + 30
+          
           const gradient = ctx.createRadialGradient(
             ripple.x,
             ripple.y,
-            ripple.radius - 30,
+            innerRadius,
             ripple.x,
             ripple.y,
-            ripple.radius + 30
+            outerRadius
           )
           gradient.addColorStop(0, `rgba(255, 255, 255, 0)`)
           gradient.addColorStop(0.5, `rgba(255, 255, 255, ${ripple.opacity * 0.3})`)
@@ -134,6 +195,7 @@ export default function Welcome() {
     <div
       className="relative w-full h-screen overflow-hidden cursor-pointer"
       onClick={handleScreenClick}
+      onTouchStart={handleTouchStart}
       style={{ fontFamily: '"Inter", sans-serif' }}
     >
       {/* Fullscreen Background Image with entrance animation */}
@@ -153,6 +215,13 @@ export default function Welcome() {
       {/* Optional Dark Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
 
+      {/* Water Ripple Canvas - Interactive layer */}
+      <canvas
+        ref={waterRippleCanvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ mixBlendMode: 'screen', zIndex: 10 }}
+      />
+
       {/* Animated Text Content */}
       <AnimatePresence>
         {showTitle && (
@@ -164,6 +233,7 @@ export default function Welcome() {
               ease: [0.22, 1, 0.36, 1], // Cinematic easeOut
             }}
             className="absolute inset-0 flex items-start justify-center pt-10"
+            style={{ zIndex: 20 }}
           >
             <h1 className="text-5xl md:text-7xl font-bold text-white text-center px-6 tracking-tight">
               Welcome to Transact
@@ -181,6 +251,7 @@ export default function Welcome() {
               ease: [0.22, 1, 0.36, 1],
             }}
             className="absolute bottom-20 left-0 right-0 flex justify-center"
+            style={{ zIndex: 20 }}
           >
             <p className="text-lg md:text-xl text-white/90 text-center px-6">
               Please click anywhere to start
@@ -189,11 +260,11 @@ export default function Welcome() {
         )}
       </AnimatePresence>
 
-      {/* Ripple Canvas */}
+      {/* Navigation Ripple Canvas */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 pointer-events-none"
-        style={{ mixBlendMode: 'screen' }}
+        style={{ mixBlendMode: 'screen', zIndex: 30 }}
       />
 
       {/* Transition Overlay */}
@@ -204,6 +275,7 @@ export default function Welcome() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, ease: 'easeInOut' }}
             className="absolute inset-0 bg-black pointer-events-none"
+            style={{ zIndex: 40 }}
           />
         )}
       </AnimatePresence>
