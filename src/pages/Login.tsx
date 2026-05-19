@@ -2,10 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { authService } from '@/services/auth'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Zap, ChevronLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 
 export default function Login() {
   const [step, setStep] = useState(1)
@@ -50,125 +48,107 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen h-screen overflow-hidden bg-gradient-primary flex flex-col items-center justify-center px-6 py-12 font-sans">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-xs"
       >
-        {/* Logo/Brand */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl mb-4">
-            <Zap className="w-8 h-8 text-primary-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-2">TransAct</h1>
-          <p className="text-white/80">Sign in to continue</p>
+        {/* Brand */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold text-black mb-2">TransAct</h1>
+          <p className="text-gray-400 text-lg">A million ways to share bills</p>
         </div>
 
-        {/* Login Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="bg-white rounded-3xl p-8 card-shadow relative overflow-hidden"
-        >
-          {step === 2 && (
-            <button
-              onClick={handleBack}
-              className="absolute top-6 left-6 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        {/* Form */}
+        <div className="space-y-3">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm"
             >
-              <ChevronLeft className="text-gray-600" size={20} />
-            </button>
+              {error}
+            </motion.div>
           )}
 
-          <div className="space-y-6">
-            {error && (
+          <AnimatePresence mode="wait">
+            {step === 1 ? (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm"
+                key="step1"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-3"
               >
-                {error}
+                <input
+                  type="email"
+                  placeholder="name@framer.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
+                />
+                <button
+                  onClick={handleContinue}
+                  className="w-full py-3 bg-black text-white font-medium rounded-xl hover:bg-gray-900 transition-colors"
+                >
+                  Continue
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-3"
+              >
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-1 text-gray-400 hover:text-black transition-colors mb-1"
+                >
+                  <ChevronLeft size={16} />
+                  <span className="text-sm">Back</span>
+                </button>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
+                />
+                <button
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="w-full py-3 bg-black text-white font-medium rounded-xl hover:bg-gray-900 transition-colors disabled:opacity-60"
+                >
+                  {isLoading ? 'Signing in...' : 'Sign In'}
+                </button>
               </motion.div>
             )}
+          </AnimatePresence>
+        </div>
 
-            <AnimatePresence mode="wait">
-              {step === 1 && (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 300 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -300 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <Input
-                    type="email"
-                    label="Email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full mt-6"
-                    onClick={handleContinue}
-                  >
-                    Continue
-                  </Button>
-                </motion.div>
-              )}
-
-              {step === 2 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 300 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -300 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <Input
-                    type="password"
-                    label="Password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full mt-6"
-                    onClick={handleSubmit}
-                    isLoading={isLoading}
-                  >
-                    Sign In
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="mt-6 text-center">
-            <button className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-              Forgot password?
+        {/* Footer */}
+        <div className="mt-8 text-center space-y-3">
+          <button className="block w-full text-sm text-gray-400 hover:text-black transition-colors">
+            Forgot password?
+          </button>
+          <p className="text-sm text-gray-400">
+            Don't have an account?{' '}
+            <button
+              onClick={() => navigate('/signup')}
+              className="text-black font-medium hover:underline"
+            >
+              Sign up
             </button>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button
-                onClick={() => navigate('/signup')}
-                className="text-primary-600 font-medium hover:text-primary-700 transition-colors"
-              >
-                Sign up
-              </button>
-            </p>
-          </div>
-        </motion.div>
+          </p>
+        </div>
       </motion.div>
     </div>
   )
