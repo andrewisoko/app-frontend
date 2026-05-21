@@ -1,7 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react'
 
 
-
 interface Ripple {
   x: number
   y: number
