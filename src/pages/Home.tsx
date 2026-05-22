@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { transactionsService, Transaction } from '@/services/transactions'
-import { accountsService, Account } from '@/services/accounts'
+import { accountsService} from '@/services/accounts'
 import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
+
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import PageTransition from '@/components/animations/PageTransition'
 import { ArrowUpRight, ArrowDownLeft, CreditCard, Send, Plus, TrendingUp } from 'lucide-react'
