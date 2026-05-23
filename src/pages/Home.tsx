@@ -9,6 +9,7 @@ import PageTransition from '@/components/animations/PageTransition'
 import { ArrowUpRight, ArrowDownLeft, CreditCard, Send, Plus, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 
+
 export default function Home() {
   const { user } = useAuth()
   const [balance, setBalance] = useState<number>(0)
