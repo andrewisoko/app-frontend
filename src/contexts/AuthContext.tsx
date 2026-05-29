@@ -21,22 +21,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const initAuth = async () => {
-      const token = authService.getToken()
-      
-      if (token) {
-        try {
-          const currentUser = await authService.getCurrentUser()
+    const token = authService.getToken()
+    if (token) {
+      if (authService.isTokenExpired(token)) {
+        authService.logout()
+      } else {
+        const currentUser = authService.getCurrentUser()
+        if (currentUser) {
           setUser(currentUser)
-        } catch (error) {
+        } else {
           authService.logout()
         }
       }
-      
-      setIsLoading(false)
     }
-
-    initAuth()
+    setIsLoading(false)
   }, [])
 
   const login = (token: string, userData: User) => {

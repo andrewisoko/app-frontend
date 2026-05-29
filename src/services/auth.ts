@@ -24,17 +24,42 @@ export interface User {
   lastName: string
 }
 
+interface RawLoginResponse {
+  access_token: string
+  refresh_token: string
+}
+
+function decodeTokenUser(token: string): User {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return {
+      id: payload.sub ?? '',
+      email: payload.email ?? '',
+      firstName: payload.username ?? payload.firstName ?? '',
+      lastName: payload.lastName ?? '',
+    }
+  } catch {
+    return { id: '', email: '', firstName: '', lastName: '' }
+  }
+}
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>('/auth/login', credentials)
+    const raw = await apiClient.post<RawLoginResponse>('/user/login', credentials)
+    const user = decodeTokenUser(raw.access_token)
+    return { token: raw.access_token, user }
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>('/auth/register', data)
+    const raw = await apiClient.post<RawLoginResponse>('/user/register', data)
+    const user = decodeTokenUser(raw.access_token)
+    return { token: raw.access_token, user }
   },
 
-  async getCurrentUser(): Promise<User> {
-    return apiClient.get<User>('/auth/me')
+  getCurrentUser(): User | null {
+    const token = this.getToken()
+    if (!token) return null
+    return decodeTokenUser(token)
   },
 
   logout(): void {
@@ -47,5 +72,15 @@ export const authService = {
 
   setToken(token: string): void {
     localStorage.setItem('token', token)
+  },
+
+  isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      if (!payload.exp) return false
+      return Date.now() / 1000 > payload.exp
+    } catch {
+      return true
+    }
   },
 }

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios'
 
-const API_BASE_URL = 'http://localhost:3100'
+const API_BASE_URL = '/api'
 
 class ApiClient {
   private client: AxiosInstance
@@ -35,7 +35,7 @@ class ApiClient {
       (error: AxiosError) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('token')
-          window.location.href = '/login'
+          window.location.href = '/welcome'
         }
         return Promise.reject(error)
       }

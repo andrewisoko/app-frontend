@@ -14,6 +14,7 @@ import Accounts from '@/pages/Accounts'
 import Transactions from '@/pages/Transactions'
 import Profile from '@/pages/Profile'
 
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   
@@ -40,7 +41,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (isAuthenticated) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/app" replace />
   }
   
   return <>{children}</>
@@ -75,7 +76,7 @@ function App() {
             </PublicRoute>
           } />
           
-          <Route path="/" element={
+          <Route path="/app" element={
             <ProtectedRoute>
               <MainLayout />
             </ProtectedRoute>
@@ -88,6 +89,8 @@ function App() {
             <Route path="transactions" element={<Transactions />} />
             <Route path="profile" element={<Profile />} />
           </Route>
+
+          <Route path="/" element={<Navigate to="/welcome" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

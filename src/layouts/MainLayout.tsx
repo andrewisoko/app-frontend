@@ -3,11 +3,11 @@ import { motion } from 'framer-motion'
 import { Home, CreditCard, Inbox, FileText, User } from 'lucide-react'
 
 const navItems = [
-  { path: '/', icon: Home, label: 'Home' },
-  { path: '/cards', icon: CreditCard, label: 'Cards' },
-  { path: '/contracts', icon: FileText, label: 'Contracts' },
-  { path: '/inbox', icon: Inbox, label: 'Inbox', badge: 2 },
-  { path: '/profile', icon: User, label: 'Profile' },
+  { path: '/app', icon: Home, label: 'Home' },
+  { path: '/app/cards', icon: CreditCard, label: 'Cards' },
+  { path: '/app/contracts', icon: FileText, label: 'Contracts' },
+  { path: '/app/inbox', icon: Inbox, label: 'Inbox', badge: 2 },
+  { path: '/app/profile', icon: User, label: 'Profile' },
 ]
 
 export default function MainLayout() {

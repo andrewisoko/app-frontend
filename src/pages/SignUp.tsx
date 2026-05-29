@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { authService } from '@/services/auth'
@@ -13,8 +13,14 @@ export default function SignUp() {
   const [lastName, setLastName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const { login } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/app', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const handleContinue = () => {
     setError('')
@@ -49,7 +55,6 @@ export default function SignUp() {
     try {
       const response = await authService.register({ email, password, firstName, lastName })
       login(response.token, response.user)
-      navigate('/')
     } catch (err) {
       setError('Registration failed. Please try again.')
     } finally {

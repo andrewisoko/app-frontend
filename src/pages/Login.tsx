@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { authService } from '@/services/auth'
@@ -11,8 +11,14 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const { login } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/app', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const handleContinue = () => {
     setError('')
@@ -39,7 +45,6 @@ export default function Login() {
     try {
       const response = await authService.login({ email, password })
       login(response.token, response.user)
-      navigate('/')
     } catch (err) {
       setError('Invalid email or password')
     } finally {
