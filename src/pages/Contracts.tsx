@@ -73,7 +73,7 @@ export default function Contracts() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Contracts</h1>
+            <h1 className="text-2xl font-bold text-white">Contracts</h1>
             <p className="text-gray-600 mt-1">Manage your agreements</p>
           </div>
           <Button size="sm" className="flex items-center gap-2">
