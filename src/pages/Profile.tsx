@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import { userService, UserProfile } from '@/services/user'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import PageTransition from '@/components/animations/PageTransition'
@@ -28,6 +29,24 @@ export default function Profile() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true)
+      try {
+        const profile = await userService.getProfile()
+        setUserProfile(profile)
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -38,13 +57,13 @@ export default function Profile() {
     {
       icon: <Mail size={20} />,
       label: 'Email',
-      value: user?.email,
+      value: userProfile?.email || user?.email,
       action: () => {},
     },
     {
       icon: <Phone size={20} />,
       label: 'Phone Number',
-      value: '+1 (555) 123-4567',
+      value: userProfile?.phoneNumber || 'Not set',
       action: () => {},
     },
   ]
@@ -84,7 +103,7 @@ export default function Profile() {
       <div className="p-6 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+          <h1 className="text-2xl font-bold text-gray-200">Profile</h1>
           <p className="text-gray-600 mt-1">Manage your account settings</p>
         </div>
 
@@ -95,14 +114,23 @@ export default function Profile() {
               <UserIcon size={40} />
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-1">
-                {user?.firstName} {user?.lastName}
-              </h2>
-              <p className="text-white/80">{user?.email}</p>
-              <button className="mt-3 text-sm bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-lg transition-colors flex items-center gap-2">
-                <Settings size={14} />
-                Edit Profile
-              </button>
+              {isLoading ? (
+                <>
+                  <div className="w-32 h-8 bg-white/20 rounded animate-pulse mb-2"></div>
+                  <div className="w-40 h-5 bg-white/20 rounded animate-pulse"></div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-2xl font-bold mb-1">
+                    {userProfile?.firstName || user?.firstName} {userProfile?.lastName || user?.lastName}
+                  </h2>
+                  <p className="text-white/80">{userProfile?.email || user?.email}</p>
+                  <button className="mt-3 text-sm bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                    <Settings size={14} />
+                    Edit Profile
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </Card>

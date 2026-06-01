@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { accountsService } from '@/services/accounts'
+import { recipientsService, Recipient } from '@/services/recipients'
+import { transactionsService, Transaction } from '@/services/transactions'
 import PageTransition from '@/components/animations/PageTransition'
 import { 
   Send, 
@@ -13,30 +15,71 @@ import {
   ArrowUpRight,
   ShoppingBag,
   Receipt,
-  ChevronRight
+  ChevronRight,
+  DollarSign,
+  CreditCard,
+  Wallet,
+  Home as HomeIcon
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-const recipients = [
-  { id: 1, name: 'Sarah', initials: 'SK', bg: '#7C3AED' },
-  { id: 2, name: 'Marcus', initials: 'ML', bg: '#2563EB' },
-  { id: 3, name: 'Priya', initials: 'PS', bg: '#DB2777' },
-  { id: 4, name: 'Tom', initials: 'TB', bg: '#059669' },
-  { id: 5, name: 'Ana', initials: 'AC', bg: '#EA580C' },
-]
+// Icon mapping for transaction categories
+const getCategoryIcon = (category?: string) => {
+  const categoryMap: Record<string, any> = {
+    utilities: Zap,
+    salary: ArrowUpRight,
+    groceries: ShoppingBag,
+    shopping: ShoppingBag,
+    bills: Receipt,
+    transfer: ArrowLeftRight,
+    subscription: CreditCard,
+    payment: DollarSign,
+    deposit: Wallet,
+    withdrawal: Wallet,
+    default: HomeIcon,
+  }
+  return categoryMap[category?.toLowerCase() || 'default'] || categoryMap.default
+}
 
-const mockTransactions = [
-  { id: 1, name: 'Apple Inc.', date: 'Today, 10:30 AM', amount: -9.99, icon: Zap, positive: false },
-  { id: 2, name: 'Salary Deposit', date: 'Yesterday, 9:00 AM', amount: 5420.00, icon: ArrowUpRight, positive: true },
-  { id: 3, name: 'Whole Foods', date: 'Yesterday, 2:45 PM', amount: -156.24, icon: ShoppingBag, positive: false },
-  { id: 4, name: 'Electric Co.', date: 'Dec 28', amount: -89.50, icon: Receipt, positive: false },
-  { id: 5, name: 'From Savings', date: 'Dec 27', amount: 500.00, icon: ArrowLeftRight, positive: true },
-]
+// Generate initials from name
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(' ')
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+  return name.substring(0, 2).toUpperCase()
+}
+
+// Generate a consistent color based on string
+const getAvatarColor = (str: string): string => {
+  const colors = ['#7C3AED', '#2563EB', '#DB2777', '#059669', '#EA580C', '#DC2626', '#9333EA']
+  const hash = str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return colors[hash % colors.length]
+}
+
+// Format date for display
+const formatTransactionDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) {
+    return `Today, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+  } else if (diffDays === 1) {
+    return `Yesterday, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+  } else {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+}
 
 export default function Home() {
-  useAuth()
-  const [balance, setBalance] = useState<number>(199031.37)
+  const { user } = useAuth()
+  const [balance, setBalance] = useState<number>(0)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [recipients, setRecipients] = useState<Recipient[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
@@ -44,9 +87,32 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    accountsService.getAccounts()
-      .then(accounts => { if (accounts.length > 0) setBalance(accounts[0].balance) })
-      .catch(() => {})
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        // Fetch accounts to get total balance (available_balance)
+        const accounts = await accountsService.getAccounts()
+        if (accounts.length > 0) {
+          // Sum all available balances across accounts
+          const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
+          setBalance(totalBalance)
+        }
+
+        // Fetch recipients
+        const recipientsData = await recipientsService.getRecipients()
+        setRecipients(recipientsData.slice(0, 5)) // Show only first 5
+
+        // Fetch transactions
+        const transactionsData = await transactionsService.getTransactions()
+        setTransactions(transactionsData.slice(0, 5)) // Show only first 5 recent
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const formatTime = (date: Date) =>
@@ -78,6 +144,18 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Welcome Message */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="px-6 pb-4"
+        >
+          <h1 className="text-2xl font-bold text-white">
+            Welcome, {user?.firstName || 'User'}
+          </h1>
+        </motion.div>
 
         {/* Balance Card */}
         <motion.div
@@ -149,14 +227,30 @@ export default function Home() {
               <span className="text-white/60 text-xs">Add</span>
             </motion.button>
 
-            {recipients.map((r) => (
-              <motion.button key={r.id} whileTap={{ scale: 0.95 }} className="flex flex-col items-center gap-2 flex-shrink-0">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-base" style={{ background: r.bg }}>
-                  {r.initials}
+            {isLoading ? (
+              // Loading skeletons
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                  <div className="w-14 h-14 rounded-full animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }}></div>
+                  <div className="w-12 h-3 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }}></div>
                 </div>
-                <span className="text-white/60 text-xs">{r.name}</span>
-              </motion.button>
-            ))}
+              ))
+            ) : recipients.length > 0 ? (
+              recipients.map((r) => {
+                const initials = r.initials || getInitials(r.name)
+                const bgColor = r.avatarColor || getAvatarColor(r.name)
+                return (
+                  <motion.button key={r.id} whileTap={{ scale: 0.95 }} className="flex flex-col items-center gap-2 flex-shrink-0">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-base" style={{ background: bgColor }}>
+                      {initials}
+                    </div>
+                    <span className="text-white/60 text-xs">{r.name.split(' ')[0]}</span>
+                  </motion.button>
+                )
+              })
+            ) : (
+              <div className="text-white/60 text-sm py-4">No recipients found</div>
+            )}
           </div>
         </div>
 
@@ -170,35 +264,61 @@ export default function Home() {
           </div>
 
           <div className="space-y-2">
-            {mockTransactions.map((tx, i) => {
-              const Icon = tx.icon
-              return (
-                <motion.div
-                  key={tx.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.07 }}
+            {isLoading ? (
+              // Loading skeletons
+              Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
                   className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.07]"
                   style={{ background: 'rgba(255,255,255,0.04)' }}
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: tx.positive ? 'rgba(5,150,105,0.25)' : 'rgba(109,40,217,0.3)' }}
-                    >
-                      <Icon size={18} className="text-white" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-white text-sm">{tx.name}</div>
-                      <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{tx.date}</div>
+                    <div className="w-11 h-11 rounded-full animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }}></div>
+                    <div className="space-y-2">
+                      <div className="w-24 h-4 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }}></div>
+                      <div className="w-16 h-3 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.08)' }}></div>
                     </div>
                   </div>
-                  <div className="font-semibold text-sm" style={{ color: tx.positive ? '#00F5A0' : '#FFFFFF' }}>
-                    {tx.positive ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
-                  </div>
-                </motion.div>
-              )
-            })}
+                  <div className="w-16 h-4 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }}></div>
+                </div>
+              ))
+            ) : transactions.length > 0 ? (
+              transactions.map((tx, i) => {
+                const isPositive = tx.type === 'credit'
+                const Icon = getCategoryIcon(tx.category)
+                const displayName = tx.merchantName || tx.description || 'Transaction'
+                const formattedDate = formatTransactionDate(tx.createdAt)
+
+                return (
+                  <motion.div
+                    key={tx.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.07 }}
+                    className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.07]"
+                    style={{ background: 'rgba(255,255,255,0.04)' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: isPositive ? 'rgba(5,150,105,0.25)' : 'rgba(109,40,217,0.3)' }}
+                      >
+                        <Icon size={18} className="text-white" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-white text-sm">{displayName}</div>
+                        <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{formattedDate}</div>
+                      </div>
+                    </div>
+                    <div className="font-semibold text-sm" style={{ color: isPositive ? '#00F5A0' : '#FFFFFF' }}>
+                      {isPositive ? '+' : '-'}${Math.abs(tx.amount).toFixed(2)}
+                    </div>
+                  </motion.div>
+                )
+              })
+            ) : (
+              <div className="text-white/60 text-sm text-center py-8">No transactions found</div>
+            )}
           </div>
         </div>
 
