@@ -33,10 +33,11 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (!user?.id) return
     const fetchProfile = async () => {
       setIsLoading(true)
       try {
-        const profile = await userService.getProfile()
+        const profile = await userService.getProfile(user.id)
         setUserProfile(profile)
       } catch (error) {
         console.error('Error fetching user profile:', error)
@@ -46,7 +47,7 @@ export default function Profile() {
     }
 
     fetchProfile()
-  }, [])
+  }, [user?.id])
 
   const handleLogout = () => {
     logout()

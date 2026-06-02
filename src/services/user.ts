@@ -19,11 +19,11 @@ export interface UpdateProfileData {
 }
 
 export const userService = {
-  async getProfile(): Promise<UserProfile> {
-    return apiClient.get<UserProfile>('/user/profile')
+  async getProfile(userId: string): Promise<UserProfile> {
+    return apiClient.get<UserProfile>(`/user/${userId}`)
   },
 
-  async updateProfile(data: UpdateProfileData): Promise<UserProfile> {
-    return apiClient.patch<UserProfile>('/user/profile', data)
+  async updateProfile(userId: string, data: UpdateProfileData): Promise<UserProfile> {
+    return apiClient.patch<UserProfile>(`/user/${userId}`, data)
   },
 }
