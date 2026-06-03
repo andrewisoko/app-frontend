@@ -1,11 +1,13 @@
 import { createContext, useState, useEffect, ReactNode } from 'react'
 import { authService, User } from '@/services/auth'
+import { userService, UserProfile } from '@/services/user'
 
 interface AuthContextType {
   user: User | null
+  userProfile: UserProfile | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (token: string, user: User) => void
+  login: (token: string, user: User) => Promise<void>
   logout: () => void
   updateUser: (user: User) => void
 }
@@ -18,33 +20,50 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = authService.getToken()
-    if (token) {
-      if (authService.isTokenExpired(token)) {
-        authService.logout()
-      } else {
-        const currentUser = authService.getCurrentUser()
-        if (currentUser) {
-          setUser(currentUser)
-        } else {
+    const initialize = async () => {
+      const token = authService.getToken()
+      if (token) {
+        if (authService.isTokenExpired(token)) {
           authService.logout()
+        } else {
+          const currentUser = authService.getCurrentUser()
+          if (currentUser) {
+            setUser(currentUser)
+            try {
+              const profile = await userService.getProfile(currentUser.id)
+              setUserProfile(profile)
+            } catch {
+              // Profile fetch failed — user remains authenticated via token
+            }
+          } else {
+            authService.logout()
+          }
         }
       }
+      setIsLoading(false)
     }
-    setIsLoading(false)
+    initialize()
   }, [])
 
-  const login = (token: string, userData: User) => {
+  const login = async (token: string, userData: User) => {
     authService.setToken(token)
     setUser(userData)
+    try {
+      const profile = await userService.getProfile(userData.id)
+      setUserProfile(profile)
+    } catch {
+      // Profile fetch failed — proceed without profile
+    }
   }
 
   const logout = () => {
     authService.logout()
     setUser(null)
+    setUserProfile(null)
   }
 
   const updateUser = (userData: User) => {
@@ -55,6 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     <AuthContext.Provider
       value={{
         user,
+        userProfile,
         isAuthenticated: !!user,
         isLoading,
         login,

@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
-import { userService, UserProfile } from '@/services/user'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import PageTransition from '@/components/animations/PageTransition'
@@ -26,28 +25,9 @@ interface SettingItem {
 }
 
 export default function Profile() {
-  const { user, logout } = useAuth()
+  const { user, userProfile, isLoading, logout } = useAuth()
   const navigate = useNavigate()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    if (!user?.id) return
-    const fetchProfile = async () => {
-      setIsLoading(true)
-      try {
-        const profile = await userService.getProfile(user.id)
-        setUserProfile(profile)
-      } catch (error) {
-        console.error('Error fetching user profile:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchProfile()
-  }, [user?.id])
 
   const handleLogout = () => {
     logout()
@@ -64,7 +44,7 @@ export default function Profile() {
     {
       icon: <Phone size={20} />,
       label: 'Phone Number',
-      value: userProfile?.phoneNumber || 'Not set',
+      value: userProfile?.mobile_number || 'Not set',
       action: () => {},
     },
   ]
@@ -123,7 +103,7 @@ export default function Profile() {
               ) : (
                 <>
                   <h2 className="text-2xl font-bold mb-1">
-                    {userProfile?.firstName || user?.firstName} {userProfile?.lastName || user?.lastName}
+                    {userProfile?.name} {userProfile?.surname}
                   </h2>
                   <p className="text-white/80">{userProfile?.email || user?.email}</p>
                   <button className="mt-3 text-sm bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-lg transition-colors flex items-center gap-2">

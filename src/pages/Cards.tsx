@@ -50,7 +50,7 @@ export default function Cards() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Virtual Cards</h1>
+            <h1 className="text-2xl font-bold text-gray-300">Virtual Cards</h1>
             <p className="text-gray-600 mt-1">Manage your payment cards</p>
           </div>
           <Button size="sm" className="flex items-center gap-2">

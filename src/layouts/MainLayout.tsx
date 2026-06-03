@@ -1,17 +1,26 @@
+import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Home, CreditCard, Inbox, FileText, User } from 'lucide-react'
+import { inboxService } from '@/services/inbox'
 
 const navItems = [
   { path: '/app', icon: Home, label: 'Home' },
   { path: '/app/cards', icon: CreditCard, label: 'Cards' },
   { path: '/app/contracts', icon: FileText, label: 'Contracts' },
-  { path: '/app/inbox', icon: Inbox, label: 'Inbox', badge: 2 },
+  { path: '/app/inbox', icon: Inbox, label: 'Inbox' },
   { path: '/app/profile', icon: User, label: 'Profile' },
 ]
 
 export default function MainLayout() {
   const location = useLocation()
+  const [inboxCount, setInboxCount] = useState(0)
+
+  useEffect(() => {
+    inboxService.getReceivedCards()
+      .then((cards) => setInboxCount(cards.filter((c) => c.status === 'new').length))
+      .catch(() => setInboxCount(0))
+  }, [])
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #140021 0%, #1B012B 100%)' }}>
@@ -39,9 +48,9 @@ export default function MainLayout() {
                 >
                   <div className="relative">
                     <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                    {item.badge && (
+                    {item.path === '/app/inbox' && inboxCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                        {item.badge}
+                        {inboxCount}
                       </span>
                     )}
                   </div>

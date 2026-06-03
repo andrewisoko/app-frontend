@@ -1,26 +1,35 @@
 import { apiClient } from './api'
 
 export interface Account {
-  id: string
-  accountNumber: string
-  accountName: string
-  balance: number
+  _id: string
+  fullName: string
+  accountNumber: number
+  pan: string
+  ledger_balance: number
+  available_balance: number
+  hold: number
   currency: string
-  type: 'checking' | 'savings'
-  status: 'active' | 'inactive' | 'frozen'
+  expiry: string
+  status: string
+  mainVirtualCard: string
+  tempVirtualCard: string[]
+  transactions: unknown[]
+  ledgerEntries: unknown[]
+  customer: string
   createdAt: string
+  updatedAt: string
+}
+
+export interface FindAccountResponse {
+  account: Account
+  userName: string
 }
 
 export const accountsService = {
-  async getAccounts(): Promise<Account[]> {
-    return apiClient.get<Account[]>('/accounts')
-  },
-
-  async getAccount(id: string): Promise<Account> {
-    return apiClient.get<Account>(`/accounts/${id}`)
-  },
-
-  async switchAccount(id: string): Promise<void> {
-    return apiClient.post<void>(`/accounts/${id}/switch`)
+  async findAccount(username: string, accountId: string): Promise<FindAccountResponse> {
+    return apiClient.post<FindAccountResponse>('/account/find-account', {
+      userName: username,
+      accountId,
+    })
   },
 }

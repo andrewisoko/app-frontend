@@ -6,10 +6,13 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  email: string
-  password: string
-  firstName: string
-  lastName: string
+  
+  name:string,
+  surname:string,
+  mobile_number:string,
+  email:string,
+  password:string,
+  confirmPassword:string
 }
 
 export interface AuthResponse {
@@ -20,8 +23,8 @@ export interface AuthResponse {
 export interface User {
   id: string
   email: string
-  firstName: string
-  lastName: string
+  username: string
+  role: string
 }
 
 interface RawLoginResponse {
@@ -34,12 +37,12 @@ function decodeTokenUser(token: string): User {
     const payload = JSON.parse(atob(token.split('.')[1]))
     return {
       id: payload.sub ?? '',
+      username: payload.username ?? payload.username ?? '',
       email: payload.email ?? '',
-      firstName: payload.username ?? payload.firstName ?? '',
-      lastName: payload.lastName ?? '',
+      role: payload.role ?? '',
     }
   } catch {
-    return { id: '', email: '', firstName: '', lastName: '' }
+    return { id: '', email: '', username: '', role: '' }
   }
 }
 

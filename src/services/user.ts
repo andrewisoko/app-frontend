@@ -2,20 +2,27 @@ import { apiClient } from './api'
 
 export interface UserProfile {
   id: string
+  role: string
+  user_type: string
+  name: string
+  surname: string
+  mobile_number: string
+  user_name: string
   email: string
-  firstName: string
-  lastName: string
-  phoneNumber?: string
-  avatar?: string
-  createdAt: string
-  updatedAt: string
+  accounts: string // JSON stringified array of account IDs
+  recipients: unknown[]
+  created_contract: unknown | null
+  main_bank: string
+  created_at: string
+  updated_at: string
 }
 
 export interface UpdateProfileData {
-  firstName?: string
-  lastName?: string
-  phoneNumber?: string
-  avatar?: string
+  name?: string
+  surname?: string
+  mobileNumber?: string
+  email?: string
+  password:string
 }
 
 export const userService = {

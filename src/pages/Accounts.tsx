@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { accountsService, Account } from '@/services/accounts'
+import { useAuth } from '@/hooks/useAuth'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { SkeletonCard } from '@/components/ui/Skeleton'
@@ -8,35 +9,42 @@ import { Wallet, CheckCircle, XCircle, Lock } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Accounts() {
+  const { userProfile } = useAuth()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [switchingId, setSwitchingId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchAccounts()
-  }, [])
+    if (userProfile) {
+      fetchAccounts()
+    }
+  }, [userProfile])
 
   const fetchAccounts = async () => {
+    if (!userProfile) return
     try {
-      const data = await accountsService.getAccounts()
-      setAccounts(data)
+      // Handles both JSON array ["id"] and PostgreSQL set {"id"} formats.
+      const rawAccounts = userProfile.accounts?.trim() ?? ''
+      let accountIds: string[] = []
+      if (rawAccounts.startsWith('[')) {
+        try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }
+      } else if (rawAccounts.startsWith('{')) {
+        accountIds = rawAccounts
+          .slice(1, -1)
+          .split(',')
+          .map((id) => id.replace(/"/g, '').trim())
+          .filter(Boolean)
+      }
+
+      const results = await Promise.all(
+        accountIds.map((id) =>
+          accountsService.findAccount(userProfile.user_name, id)
+        )
+      )
+      setAccounts(results.map((r) => r.account))
     } catch (error) {
       console.error('Failed to fetch accounts:', error)
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleSwitchAccount = async (id: string) => {
-    setSwitchingId(id)
-    try {
-      await accountsService.switchAccount(id)
-      // Refresh accounts to update active status
-      await fetchAccounts()
-    } catch (error) {
-      console.error('Failed to switch account:', error)
-    } finally {
-      setSwitchingId(null)
     }
   }
 
@@ -96,44 +104,32 @@ export default function Accounts() {
             {accounts.map((account, index) => {
               const statusConfig = getStatusConfig(account.status)
               const StatusIcon = statusConfig.icon
-              const isActiveAccount = index === 0 // Simplified - first account is active
 
               return (
                 <motion.div
-                  key={account.id}
+                  key={account._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className={`${
-                    isActiveAccount ? 'border-2 border-primary-500' : 'border-2 border-transparent'
-                  }`}>
+                  <Card className="border-2 border-primary-500">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start gap-3 flex-1">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          account.type === 'checking'
-                            ? 'bg-primary-100'
-                            : 'bg-secondary-100'
-                        }`}>
-                          <Wallet
-                            className={account.type === 'checking' ? 'text-primary-600' : 'text-secondary-600'}
-                            size={24}
-                          />
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-primary-100">
+                          <Wallet className="text-primary-600" size={24} />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-gray-900">{account.accountName}</h3>
-                            {isActiveAccount && (
-                              <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
-                                Current
-                              </span>
-                            )}
+                            <h3 className="font-semibold text-gray-900">{account.fullName}</h3>
+                            <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
+                              Current
+                            </span>
                           </div>
                           <p className="text-sm text-gray-600 font-mono">
                             {account.accountNumber}
                           </p>
                           <p className="text-xs text-gray-500 mt-1 capitalize">
-                            {account.type} Account
+                            {userProfile?.main_bank ?? ''} Account
                           </p>
                         </div>
                       </div>
@@ -146,7 +142,10 @@ export default function Accounts() {
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <div className="text-sm text-gray-600 mb-1">Available Balance</div>
                       <div className="text-2xl font-bold text-gray-900">
-                        ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {account.available_balance.toLocaleString('en-GB', {
+                          style: 'currency',
+                          currency: account.currency,
+                        })}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">{account.currency}</div>
                     </div>
@@ -155,18 +154,6 @@ export default function Accounts() {
                       <div className="text-gray-600">
                         Opened {new Date(account.createdAt).toLocaleDateString()}
                       </div>
-                      
-                      {!isActiveAccount && account.status === 'active' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-primary-600"
-                          onClick={() => handleSwitchAccount(account.id)}
-                          isLoading={switchingId === account.id}
-                        >
-                          Switch to this account
-                        </Button>
-                      )}
                     </div>
                   </Card>
                 </motion.div>
@@ -177,10 +164,10 @@ export default function Accounts() {
 
         {/* Info Card */}
         <Card hover={false} className="bg-blue-50 border border-blue-100">
-          <h4 className="font-medium text-blue-900 mb-2">💡 About Account Types</h4>
+          <h4 className="font-medium text-blue-900 mb-2">💡 About Your Account</h4>
           <ul className="text-sm text-blue-700 space-y-1">
-            <li>• <strong>Checking:</strong> For daily transactions and expenses</li>
-            <li>• <strong>Savings:</strong> For storing money and earning interest</li>
+            <li>• <strong>Ledger balance:</strong> Total funds including pending transactions</li>
+            <li>• <strong>Available balance:</strong> Funds available for immediate use</li>
           </ul>
         </Card>
       </div>

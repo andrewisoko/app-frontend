@@ -74,7 +74,7 @@ const formatTransactionDate = (dateString: string): string => {
 }
 
 export default function Home() {
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
   const [balance, setBalance] = useState<number>(0)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [recipients, setRecipients] = useState<Recipient[]>([])
@@ -87,24 +87,53 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    if (!userProfile) return
+
     const fetchData = async () => {
       setIsLoading(true)
       try {
-        // Fetch accounts to get total balance (available_balance)
-        const accounts = await accountsService.getAccounts()
-        if (accounts.length > 0) {
-          // Sum all available balances across accounts
-          const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
+        // Parse account IDs from user profile.
+        // Handles both JSON array ["id"] and PostgreSQL set {"id"} formats.
+        const rawAccounts = userProfile.accounts?.trim() ?? ''
+        let accountIds: string[] = []
+        if (rawAccounts.startsWith('[')) {
+          try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }
+        } else if (rawAccounts.startsWith('{')) {
+          accountIds = rawAccounts
+            .slice(1, -1)
+            .split(',')
+            .map((id) => id.replace(/"/g, '').trim())
+            .filter(Boolean)
+        }
+
+        if (accountIds.length > 0) {
+          const results = await Promise.all(
+            accountIds.map((id) =>
+              accountsService.findAccount(userProfile.user_name, id)
+            )
+          )
+          const totalBalance = results.reduce(
+            (sum, r) => sum + r.account.available_balance,
+            0
+          )
           setBalance(totalBalance)
         }
 
         // Fetch recipients
-        const recipientsData = await recipientsService.getRecipients()
-        setRecipients(recipientsData.slice(0, 5)) // Show only first 5
+        try {
+          const recipientsData = await recipientsService.getRecipients()
+          setRecipients(recipientsData.slice(0, 5))
+        } catch {
+          // Recipients endpoint may not be ready
+        }
 
         // Fetch transactions
-        const transactionsData = await transactionsService.getTransactions()
-        setTransactions(transactionsData.slice(0, 5)) // Show only first 5 recent
+        try {
+          const transactionsData = await transactionsService.getTransactions()
+          setTransactions(transactionsData.slice(0, 5))
+        } catch {
+          // Transactions endpoint may not be ready
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
@@ -113,7 +142,7 @@ export default function Home() {
     }
 
     fetchData()
-  }, [])
+  }, [userProfile])
 
   const formatTime = (date: Date) =>
     date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })
@@ -153,7 +182,7 @@ export default function Home() {
           className="px-6 pb-4"
         >
           <h1 className="text-2xl font-bold text-white">
-            Welcome {user?.firstName || 'User'}
+            Welcome {userProfile?.user_name || user?.username || 'User'}
           </h1>
         </motion.div>
 
@@ -178,7 +207,7 @@ export default function Home() {
             </div>
 
             <h2 className="text-4xl font-bold text-white mb-2">
-              ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              £{balance.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
             </h2>
 
             <div className="flex items-center gap-1.5 mb-6">
