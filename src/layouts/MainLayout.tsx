@@ -17,7 +17,7 @@ export default function MainLayout() {
   const [inboxCount, setInboxCount] = useState(0)
 
   useEffect(() => {
-    inboxService.getReceivedCards()
+    inboxService.getReceivedContracts()
       .then((cards) => setInboxCount(cards.filter((c) => c.status === 'new').length))
       .catch(() => setInboxCount(0))
   }, [])

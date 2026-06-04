@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { inboxService, ReceivedCard } from '@/services/inbox'
+import { inboxService, ReceivedContract } from '@/services/inbox'
+import { contractsService } from '@/services/contracts'
+import { useAuth } from '@/hooks/useAuth'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { SkeletonCard } from '@/components/ui/Skeleton'
@@ -8,48 +10,52 @@ import { Inbox as InboxIcon, Check, X, CreditCard } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Inbox() {
-  const [receivedCards, setReceivedCards] = useState<ReceivedCard[]>([])
+  const { user } = useAuth()
+  const [receivedContracts, setReceivedContracts] = useState<ReceivedContract[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchReceivedCards()
+    fetchReceivedContracts()
   }, [])
 
-  const fetchReceivedCards = async () => {
+  const fetchReceivedContracts = async () => {
     try {
-      const data = await inboxService.getReceivedCards()
-      setReceivedCards(data)
+      const data = await inboxService.getReceivedContracts()
+      setReceivedContracts(data)
     } catch (error) {
-      console.error('Failed to fetch received cards:', error)
+      console.error('Failed to fetch received contracts:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleAccept = async (id: string) => {
+    if (!user?.id) return
     setProcessingId(id)
     try {
-      await inboxService.acceptCard(id)
-      setReceivedCards((prev) => prev.filter((card) => card.id !== id))
+      await contractsService.contractReceivedOnInbox(id, user.id, true)
+      setReceivedContracts((prev) => prev.filter((contract) => contract.id !== id))
     } catch (error) {
-      console.error('Failed to accept card:', error)
+      console.error('Failed to accept contract:', error)
     } finally {
       setProcessingId(null)
     }
   }
 
   const handleDecline = async (id: string) => {
+    if (!user?.id) return
     setProcessingId(id)
     try {
-      await inboxService.declineCard(id)
-      setReceivedCards((prev) => prev.filter((card) => card.id !== id))
+      await contractsService.contractReceivedOnInbox(id, user.id, false)
+      setReceivedContracts((prev) => prev.filter((contract) => contract.id !== id))
     } catch (error) {
-      console.error('Failed to decline card:', error)
+      console.error('Failed to decline contract:', error)
     } finally {
       setProcessingId(null)
     }
   }
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -72,26 +78,26 @@ export default function Inbox() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-300">Inbox</h1>
-          <p className="text-gray-600 mt-1">Cards shared with you</p>
+          <p className="text-gray-600 mt-1">Contracts shared with you</p>
         </div>
 
-        {/* Received Cards */}
+        {/* Received Contracts */}
         {isLoading ? (
           <div className="space-y-4">
             <SkeletonCard />
             <SkeletonCard />
           </div>
-        ) : receivedCards.length === 0 ? (
+        ) : receivedContracts.length === 0 ? (
           <Card hover={false} className="text-center py-12">
             <InboxIcon className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No cards received</h3>
-            <p className="text-gray-600">When someone shares a card with you, it will appear here</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No contracts received</h3>
+            <p className="text-gray-600">When someone shares a contract with you, it will appear here</p>
           </Card>
         ) : (
           <div className="space-y-4">
-            {receivedCards.map((card, index) => (
+            {receivedContracts.map((contract, index) => (
               <motion.div
-                key={card.id}
+                key={contract.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -104,31 +110,23 @@ export default function Inbox() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{card.senderName}</h3>
-                        <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(card.status)}`}>
-                          {card.status}
+                        <h3 className="font-semibold text-gray-900">{contract.senderName}</h3>
+                        <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(contract.status)}`}>
+                          {contract.status}
                         </span>
                       </div>
 
-                      <div className="text-sm text-gray-600 mb-3">
-                        <div className="font-mono">•••• •••• •••• {card.cardNumber.slice(-4)}</div>
-                        <div className="mt-1">Expires: {card.expiryDate}</div>
-                        {card.message && (
-                          <div className="mt-2 text-gray-700 italic">"{card.message}"</div>
-                        )}
-                      </div>
-
                       <div className="text-xs text-gray-500">
-                        Received {new Date(card.receivedAt).toLocaleDateString()}
+                        Received {new Date(contract.receivedAt).toLocaleDateString()}
                       </div>
 
-                      {card.status === 'new' && (
+                      {contract.status === 'new' && (
                         <div className="flex gap-2 mt-4">
                           <Button
                             size="sm"
                             variant="primary"
-                            onClick={() => handleAccept(card.id)}
-                            isLoading={processingId === card.id}
+                            onClick={() => handleAccept(contract.id)}
+                            isLoading={processingId === contract.id}
                             className="flex items-center gap-1"
                           >
                             <Check size={16} />
@@ -137,8 +135,8 @@ export default function Inbox() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleDecline(card.id)}
-                            disabled={processingId === card.id}
+                            onClick={() => handleDecline(contract.id)}
+                            disabled={processingId === contract.id}
                             className="flex items-center gap-1"
                           >
                             <X size={16} />

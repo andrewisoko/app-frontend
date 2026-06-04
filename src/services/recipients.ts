@@ -15,12 +15,12 @@ export const recipientsService = {
     return apiClient.get<Recipient[]>('/recipients')
   },
 
-  async getRecipient(id: string): Promise<Recipient> {
-    return apiClient.get<Recipient>(`/recipients/${id}`)
+  async getRecipient(id: string, recipientUsername:string): Promise<Recipient> {
+    return apiClient.get<Recipient>(`user/${id}/recipient/${recipientUsername}`)
   },
 
-  async addRecipient(data: Omit<Recipient, 'id' | 'createdAt'>): Promise<Recipient> {
-    return apiClient.post<Recipient>('/recipients', data)
+  async addRecipient(userNameRecipient: string): Promise<Recipient> {
+    return apiClient.post<Recipient>('/user/add-recipients', userNameRecipient)
   },
 
   async deleteRecipient(id: string): Promise<void> {

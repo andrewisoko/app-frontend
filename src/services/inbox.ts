@@ -1,6 +1,8 @@
 import { apiClient } from './api'
+import { Contract } from './contracts'
+import { User } from './auth'
 
-export interface ReceivedCard {
+export interface ReceivedContract {
   id: string
   senderId: string
   senderName: string
@@ -12,15 +14,25 @@ export interface ReceivedCard {
 }
 
 export const inboxService = {
-  async getReceivedCards(): Promise<ReceivedCard[]> {
-    return apiClient.get<ReceivedCard[]>('/inbox/cards')
+  async getReceivedContracts(): Promise<ReceivedContract[]> {
+    return apiClient.get<ReceivedContract[]>('/inbox/contracts')
+  },
+  async getInbox(inboxId:string): Promise<ReceivedContract[]> {
+    return apiClient.get<ReceivedContract[]>(`/inbox/${inboxId}`)
   },
 
-  async acceptCard(id: string): Promise<void> {
-    return apiClient.post<void>(`/inbox/cards/${id}/accept`)
-  },
+  // async acceptContract(id: string): Promise<void> {
+  //   return apiClient.post<void>(`/inbox/contract/${id}/accept`)
+  // },
 
-  async declineCard(id: string): Promise<void> {
-    return apiClient.post<void>(`/inbox/cards/${id}/decline`)
+  // async declineContract(id: string): Promise<void> {
+  //   return apiClient.post<void>(`/inbox/contract/${id}/decline`)
+  // },
+
+  async postInbox(contract: Contract, user: User): Promise<void> {
+    return apiClient.post<void>('/inbox/post-inbox', {
+      contract,
+      user,
+    })
   },
 }

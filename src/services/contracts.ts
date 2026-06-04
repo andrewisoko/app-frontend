@@ -1,29 +1,52 @@
 import { apiClient } from './api'
 
-export interface Contract {
-  id: string
-  title: string
-  description: string
-  status: 'draft' | 'pending' | 'active' | 'completed' | 'cancelled'
-  createdAt: string
-  updatedAt: string
-  fields: ContractField[]
+
+export interface SignInData{
+
+  name:string,
+  surname:string,
+  mobile_number:string,
+  email:string
 }
 
-export interface ContractField {
-  id: string
-  name: string
-  type: 'text' | 'number' | 'date' | 'select'
-  label: string
-  required: boolean
-  value?: string
-  options?: string[]
-}
+
+export interface Contract{
+
+    sender: string,
+    receiver: string[],
+    split_agreement: string,
+    contractStatus: string,
+    time_agreement:Date[]
+    sender_percentage: number;
+    sender_amount: number;
+    receiver_percentage: number[];
+    receiver_amount: number[];
+    repayment_agreement:string,
+    event_agreement:string,
+    location_agreement:string,
+} 
+
+
 
 export interface CreateContractRequest {
-  title: string
-  description: string
-  fields: Omit<ContractField, 'id'>[]
+  contract: Partial<Contract>
+  senderAccountId: string
+  receiverAccountIds: string[]
+}
+
+export interface SendContractRequest extends Partial<SignInData> {
+  sender: string
+  receiver: string[]
+  split_agreement: string
+  contractStatus: string
+  time_agreement: Date[]
+  sender_percentage: number
+  sender_amount: number
+  receiver_percentage: number[]
+  receiver_amount: number[]
+  repayment_agreement: string
+  event_agreement: string
+  location_agreement: string
 }
 
 export const contractsService = {
@@ -36,14 +59,19 @@ export const contractsService = {
   },
 
   async createContract(data: CreateContractRequest): Promise<Contract> {
-    return apiClient.post<Contract>('/contracts', data)
+    return apiClient.post<Contract>('/contracts/create-contract', data)
   },
 
-  async updateContract(id: string, data: Partial<Contract>): Promise<Contract> {
-    return apiClient.put<Contract>(`/contracts/${id}`, data)
+  async sendContract(data: SendContractRequest): Promise<string> {
+    return apiClient.post<string>('/contracts/send-contract', data)
   },
 
-  async submitContract(id: string): Promise<Contract> {
-    return apiClient.post<Contract>(`/contracts/${id}/submit`)
+  async contractReceivedOnInbox(contractId: string, receiverId: string, accepted: boolean): Promise<any> {
+    return apiClient.post('/inbox/receiver-inbox-contract', {
+      contractId,
+      receiverId,
+      accepted,
+    })
   },
+
 }
