@@ -24,6 +24,8 @@ export const recipientsService = {
   },
 
   async deleteRecipient(id: string): Promise<void> {
-    return apiClient.delete<void>(`/recipients/${id}`)
+    return apiClient.delete<void>(`/recipient/${id}`)
   },
 }
+
+

@@ -1,175 +1,168 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 import { cardsService, VirtualCard } from '@/services/cards'
-import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
-import { SkeletonCard } from '@/components/ui/Skeleton'
 import PageTransition from '@/components/animations/PageTransition'
-import { CreditCard, Plus, MoreVertical, Eye, EyeOff } from 'lucide-react'
+import { CreditCard, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Cards() {
+  const { userProfile } = useAuth()
   const [cards, setCards] = useState<VirtualCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [visibleCards, setVisibleCards] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    fetchCards()
-  }, [])
+    if (!userProfile) return
 
-  const fetchCards = async () => {
-    try {
-      const data = await cardsService.getCards()
-      setCards(data)
-    } catch (error) {
-      console.error('Failed to fetch cards:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    const fetchCards = async () => {
+      setIsLoading(true)
+      try {
+        // Parse account IDs from user profile
+        const rawAccounts = userProfile.accounts?.trim() ?? ''
+        let accountIds: string[] = []
+        
+        if (rawAccounts.startsWith('[')) {
+          try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }
+        } else if (rawAccounts.startsWith('{')) {
+          accountIds = rawAccounts
+            .slice(1, -1)
+            .split(',')
+            .map((id) => id.replace(/"/g, '').trim())
+            .filter(Boolean)
+        }
 
-  const toggleCardVisibility = (cardId: string) => {
-    setVisibleCards((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(cardId)) {
-        newSet.delete(cardId)
-      } else {
-        newSet.add(cardId)
+        // Fetch cards for all accounts
+        if (accountIds.length > 0) {
+          const allCards: VirtualCard[] = []
+          for (const accountId of accountIds) {
+            try {
+              const accountCards = await cardsService.getCardsByAccountNumber(accountId)
+              allCards.push(...accountCards)
+            } catch (error) {
+              console.error(`Failed to fetch cards for account ${accountId}:`, error)
+            }
+          }
+          setCards(allCards)
+        }
+      } catch (error) {
+        console.error('Failed to fetch cards:', error)
+      } finally {
+        setIsLoading(false)
       }
-      return newSet
-    })
+    }
+
+    fetchCards()
+  }, [userProfile])
+
+  const formatCardNumber = (cardNumber: string) => {
+    // Format as: •••• •••• •••• 8492
+    const lastFour = cardNumber.slice(-4)
+    return `•••• •••• •••• ${lastFour}`
   }
 
-  const maskCardNumber = (cardNumber: string, isVisible: boolean) => {
-    if (isVisible) return cardNumber
-    return cardNumber.replace(/(\d{4})/g, '•••• ').trim()
+  const formatExpiry = (expiry: string) => {
+    // Format as MM/YY
+    if (expiry.includes('/')) return expiry
+    if (expiry.length >= 4) {
+      const month = expiry.slice(0, 2)
+      const year = expiry.slice(-2)
+      return `${month}/${year}`
+    }
+    return expiry
   }
 
   return (
     <PageTransition>
-      <div className="p-6 space-y-6">
+      <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg, #140021 0%, #1B012B 100%)' }}>
+        
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-300">Virtual Cards</h1>
-            <p className="text-gray-600 mt-1">Manage your payment cards</p>
-          </div>
-          <Button size="sm" className="flex items-center gap-2">
-            <Plus size={16} />
-            New Card
-          </Button>
+        <div className="flex items-center justify-between px-6 pt-6 pb-4">
+          <h1 className="text-xl font-semibold text-white">My Cards</h1>
+          <button 
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
+          >
+            <Plus size={22} className="text-white" />
+          </button>
         </div>
 
         {/* Cards List */}
-        {isLoading ? (
-          <div className="space-y-4">
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        ) : cards.length === 0 ? (
-          <Card hover={false} className="text-center py-12">
-            <CreditCard className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No cards yet</h3>
-            <p className="text-gray-600 mb-6">Create your first virtual card to get started</p>
-            <Button className="mx-auto">Create Card</Button>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {cards.map((card, index) => (
+        <div className="px-4 space-y-4">
+          {isLoading ? (
+            // Loading skeletons
+            Array.from({ length: 2 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-3xl p-6 animate-pulse"
+                style={{ 
+                  background: i === 0 
+                    ? 'linear-gradient(135deg, rgba(138,0,255,0.3) 0%, rgba(91,77,255,0.3) 100%)'
+                    : 'rgba(138,0,255,0.2)',
+                  height: '180px'
+                }}
+              ></div>
+            ))
+          ) : cards.length === 0 ? (
+            <div className="text-center py-16">
+              <CreditCard className="mx-auto mb-4 text-white/40" size={48} />
+              <h3 className="text-lg font-medium text-white mb-2">No cards yet</h3>
+              <p className="text-white/60">Create your first virtual card to get started</p>
+            </div>
+          ) : (
+            cards.map((card, index) => (
               <motion.div
                 key={card.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
+                className="rounded-3xl p-6 relative overflow-hidden"
+                style={{ 
+                  background: card.card_type === 'main' 
+                    ? 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)'
+                    : 'linear-gradient(135deg, #6B21A8 0%, #581C87 100%)'
+                }}
               >
-                <Card className={`relative overflow-hidden ${
-                  card.type === 'main'
-                    ? 'bg-gradient-to-br from-gray-900 to-gray-700'
-                    : 'bg-gradient-to-br from-primary-600 to-secondary-600'
-                } text-white`}>
-                  {/* Card Type Badge */}
-                  <div className="absolute top-4 right-4">
-                    <span className="text-xs bg-white/20 px-3 py-1 rounded-full">
-                      {card.type === 'main' ? 'Main Card' : 'Temporary'}
-                    </span>
+                {/* Decorative circles */}
+                <div 
+                  className="absolute top-6 left-6 w-12 h-12 rounded-full"
+                  style={{ background: 'rgba(255,255,255,0.15)' }}
+                ></div>
+                <div 
+                  className="absolute top-8 left-8 w-12 h-12 rounded-full"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
+                ></div>
+
+                {/* Card icon */}
+                <div className="absolute top-6 right-6">
+                  <CreditCard size={24} className="text-white" />
+                </div>
+
+                {/* Card Number */}
+                <div className="mt-16 mb-6">
+                  <div className="text-xl font-medium text-white tracking-wider">
+                    {formatCardNumber(card.card_number)}
                   </div>
+                </div>
 
-                  {/* Card Icon */}
-                  <CreditCard className="mb-8" size={32} />
-
-                  {/* Card Number */}
-                  <div className="mb-6">
-                    <div className="text-xs text-white/70 mb-2">Card Number</div>
-                    <div className="text-xl font-mono tracking-wider flex items-center justify-between">
-                      <span>{maskCardNumber(card.cardNumber, visibleCards.has(card.id))}</span>
-                      <button
-                        onClick={() => toggleCardVisibility(card.id)}
-                        className="ml-4 p-1 hover:bg-white/10 rounded"
-                      >
-                        {visibleCards.has(card.id) ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )}
-                      </button>
+                {/* Card Details */}
+                <div className="flex justify-between items-end">
+                  <div>
+                    <div className="text-xs text-white/60 mb-1 uppercase">Type</div>
+                    <div className="text-sm font-medium text-white capitalize">
+                      {card.card_type}
                     </div>
                   </div>
-
-                  {/* Card Details */}
-                  <div className="flex justify-between items-end">
-                    <div className="flex-1">
-                      <div className="text-xs text-white/70 mb-1">Cardholder</div>
-                      <div className="text-sm font-medium">{card.cardholderName}</div>
-                    </div>
-                    <div className="flex gap-6">
-                      <div>
-                        <div className="text-xs text-white/70 mb-1">Expires</div>
-                        <div className="text-sm font-medium">{card.expiryDate}</div>
-                      </div>
-                      {visibleCards.has(card.id) && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                        >
-                          <div className="text-xs text-white/70 mb-1">CVV</div>
-                          <div className="text-sm font-medium">{card.cvv}</div>
-                        </motion.div>
-                      )}
+                  <div>
+                    <div className="text-xs text-white/60 mb-1 uppercase">Expires</div>
+                    <div className="text-sm font-medium text-white">
+                      {formatExpiry(card.expiry)}
                     </div>
                   </div>
-
-                  {/* Card Status & Balance */}
-                  <div className="mt-6 pt-6 border-t border-white/20 flex justify-between items-center">
-                    <div>
-                      <div className="text-xs text-white/70 mb-1">Balance</div>
-                      <div className="text-lg font-semibold">${card.balance.toFixed(2)}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        card.status === 'active'
-                          ? 'bg-green-400/20 text-green-100'
-                          : 'bg-red-400/20 text-red-100'
-                      }`}>
-                        {card.status}
-                      </span>
-                      <button className="p-1 hover:bg-white/10 rounded">
-                        <MoreVertical size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </Card>
+                </div>
               </motion.div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
 
-        {/* Info Card */}
-        <Card hover={false} className="bg-primary-50 border border-primary-100">
-          <h4 className="font-medium text-primary-900 mb-2">💡 About Temporary Cards</h4>
-          <p className="text-sm text-primary-700">
-            Create temporary cards for one-time purchases or subscriptions. They're automatically
-            deleted after use or expiration, keeping your main card safe.
-          </p>
-        </Card>
       </div>
     </PageTransition>
   )

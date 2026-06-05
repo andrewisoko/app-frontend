@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { accountsService } from '@/services/accounts'
 import { recipientsService, Recipient } from '@/services/recipients'
@@ -19,7 +20,8 @@ import {
   DollarSign,
   CreditCard,
   Wallet,
-  Home as HomeIcon
+  Home as HomeIcon,
+  Bell
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -75,16 +77,13 @@ const formatTransactionDate = (dateString: string): string => {
 
 export default function Home() {
   const { user, userProfile } = useAuth()
+  const navigate = useNavigate()
   const [balance, setBalance] = useState<number>(0)
-  const [currentTime, setCurrentTime] = useState(new Date())
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hasNotifications] = useState(false) // Set to true when notifications exist
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
-    return () => clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     if (!userProfile) return
@@ -144,34 +143,27 @@ export default function Home() {
     fetchData()
   }, [userProfile])
 
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })
+
 
   return (
     <PageTransition>
       <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg, #140021 0%, #1B012B 100%)' }}>
 
-        {/* Status Bar */}
-        <div className="flex justify-between items-center px-6 pt-5 pb-4">
-          <span className="text-white font-semibold text-base">{formatTime(currentTime)}</span>
-          <div className="flex items-center gap-2">
-            <div className="flex items-end gap-[3px]">
-              <div className="w-[3px] h-2 bg-white rounded-sm"></div>
-              <div className="w-[3px] h-3 bg-white rounded-sm"></div>
-              <div className="w-[3px] h-4 bg-white rounded-sm"></div>
-              <div className="w-[3px] h-[18px] bg-white/40 rounded-sm"></div>
-            </div>
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-            </svg>
-            {/* Battery */}
-            <div className="flex items-center gap-0.5">
-              <div className="w-6 h-3 border border-white/70 rounded-[3px] relative">
-                <div className="absolute inset-[2px] right-[2px] bg-white rounded-[1px]"></div>
-              </div>
-              <div className="w-[2px] h-[6px] bg-white/70 rounded-r-sm"></div>
-            </div>
-          </div>
+        {/* Header with notification and profile */}
+        <div className="flex items-center justify-end gap-4 px-6 pt-4 pb-2">
+          <button className="text-white/70 hover:text-white transition-colors relative">
+            <Bell size={22} />
+            {hasNotifications && (
+              <div className="absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full"></div>
+            )}
+          </button>
+          <button 
+            onClick={() => navigate('/app/profile')}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm transition-transform hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
+          >
+            {getInitials(userProfile?.user_name || user?.username || 'User')}
+          </button>
         </div>
 
         {/* Welcome Message */}
@@ -179,10 +171,11 @@ export default function Home() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="px-6 pb-4"
+          className="px-6 pt-6 pb-2"
         >
+          <p className="text-white/60 text-sm mb-1">Welcome back</p>
           <h1 className="text-2xl font-bold text-white">
-            Welcome {userProfile?.user_name || user?.username || 'User'}
+            {userProfile?.user_name || user?.username || 'User'}
           </h1>
         </motion.div>
 
@@ -191,7 +184,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mx-4 mb-6 rounded-3xl p-6 relative overflow-hidden"
+          className="mt-7 mx-4 mb-6 rounded-3xl p-6 relative overflow-hidden"
           style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
         >
           {/* Glow orb */}
@@ -219,13 +212,14 @@ export default function Home() {
             {/* Quick Actions */}
             <div className="grid grid-cols-4 gap-2">
               {[
-                { icon: Send, label: 'Send' },
-                { icon: FileText, label: 'Contract' },
-                { icon: ArrowLeftRight, label: 'Transfer' },
-                { icon: Plus, label: 'Top up' },
-              ].map(({ icon: Icon, label }) => (
+                { path: '/app/send', icon: Send, label: 'Send' },
+                { path: '/app/contracts', icon: FileText, label: 'Contract' },
+                { path: '/app/transfer', icon: ArrowLeftRight, label: 'Transfer' },
+                { path: '/app/topup', icon: Plus, label: 'Top up' },
+              ].map(({ icon: Icon, label, path }) => (
                 <motion.button
                   key={label}
+                  onClick={() => path && navigate(path)}
                   whileTap={{ scale: 0.95 }}
                   className="flex flex-col items-center gap-1.5 rounded-2xl py-3 px-2 transition-all"
                   style={{ background: 'rgba(255,255,255,0.12)' }}

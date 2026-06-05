@@ -2,14 +2,15 @@ import { apiClient } from './api'
 
 export interface VirtualCard {
   id: string
-  cardNumber: string
-  cardholderName: string
-  expiryDate: string
+  card_number: string
+  cardholder_name: string
+  expiry: string
   cvv: string
-  type: 'main' | 'temporary'
+  card_type: 'main' | 'temporary'
   status: 'active' | 'inactive' | 'expired'
-  balance: number
-  createdAt: string
+  balance?: number
+  created_at: string
+  account_number: string
 }
 
 export interface CreateMainCardRequest {
@@ -29,9 +30,9 @@ export interface CreateTempCardRequest {
 }
 
 export const cardsService = {
-  // async getCards(): Promise<VirtualCard[]> {
-  //   return apiClient.get<VirtualCard[]>('/virtual-card')
-  // },
+  async getCardsByAccountNumber(accountNumber: string): Promise<VirtualCard[]> {
+    return apiClient.get<VirtualCard[]>(`/virtual-card/account/${accountNumber}`)
+  },
 
   async getVirtualCard(id: string): Promise<VirtualCard> {
     return apiClient.get<VirtualCard>(`/virtual-card/${id}`)

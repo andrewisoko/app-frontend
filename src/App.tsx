@@ -13,6 +13,9 @@ import Contracts from '@/pages/Contracts'
 import Accounts from '@/pages/Accounts'
 import Transactions from '@/pages/Transactions'
 import Profile from '@/pages/Profile'
+import SendMoney from '@/pages/SendMoney'
+import Transfer from '@/pages/Transfer'
+import TopUp from '@/pages/TopUp'
 
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -88,6 +91,9 @@ function App() {
             <Route path="accounts" element={<Accounts />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="send" element={<SendMoney />} />
+            <Route path="transfer" element={<Transfer />} />
+            <Route path="topup" element={<TopUp />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/welcome" replace />} />
