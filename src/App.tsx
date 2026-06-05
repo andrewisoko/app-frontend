@@ -16,6 +16,7 @@ import Profile from '@/pages/Profile'
 import SendMoney from '@/pages/SendMoney'
 import Transfer from '@/pages/Transfer'
 import TopUp from '@/pages/TopUp'
+import NewContract from '@/pages/NewContract'
 
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -94,6 +95,7 @@ function App() {
             <Route path="send" element={<SendMoney />} />
             <Route path="transfer" element={<Transfer />} />
             <Route path="topup" element={<TopUp />} />
+            <Route path="contracts/new" element={<NewContract />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/welcome" replace />} />

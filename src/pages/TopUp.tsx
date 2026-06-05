@@ -1,16 +1,65 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageTransition from '@/components/animations/PageTransition'
 import { ArrowLeft, Delete, CreditCard as CreditCardIcon, Building2, Wallet } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useAuth } from '@/hooks/useAuth'
+import { accountsService } from '@/services/accounts'
 
 type PaymentMethod = 'debit-card' | 'bank-transfer' | 'wallet'
 
 export default function TopUp() {
   const navigate = useNavigate()
   const [amount, setAmount] = useState('0')
+  const { userProfile } = useAuth()
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('debit-card')
-  const [currentBalance] = useState(24680.42)
+  const [currentBalance,setBalance] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  
+    
+    useEffect(() => {
+      if (!userProfile) return
+  
+      const fetchData = async () => {
+        setIsLoading(true)
+        try {
+          // Parse account IDs from user profile.
+          // Handles both JSON array ["id"] and PostgreSQL set {"id"} formats.
+          const rawAccounts = userProfile.accounts?.trim() ?? ''
+          let accountIds: string[] = []
+          if (rawAccounts.startsWith('[')) {
+            try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }
+          } else if (rawAccounts.startsWith('{')) {
+            accountIds = rawAccounts
+              .slice(1, -1)
+              .split(',')
+              .map((id) => id.replace(/"/g, '').trim())
+              .filter(Boolean)
+          }
+  
+          if (accountIds.length > 0) {
+            const results = await Promise.all(
+              accountIds.map((id) =>
+                accountsService.findAccount(userProfile.user_name, id)
+              )
+            )
+            const totalBalance = results.reduce(
+              (sum, r) => sum + r.account.available_balance,
+              0
+            )
+            setBalance(totalBalance)
+          }
+  
+        } catch (error) {
+          console.error('Error fetching data:', error)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+  
+      fetchData()
+    }, [userProfile])
+  
 
   const quickAmounts = [50, 100, 200, 500]
 

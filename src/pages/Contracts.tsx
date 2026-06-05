@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { contractsService, Contract } from '@/services/contracts'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -8,6 +9,7 @@ import { FileText, Plus, CheckCircle, Clock, XCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Contracts() {
+  const navigate = useNavigate()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -76,7 +78,7 @@ export default function Contracts() {
             <h1 className="text-2xl font-bold text-white">Contracts</h1>
             <p className="text-gray-600 mt-1">Manage your agreements</p>
           </div>
-          <Button size="sm" className="flex items-center gap-2">
+          <Button size="sm" className="flex items-center gap-2" onClick={() => navigate('/app/contracts/new')}>
             <Plus size={16} />
             Create
           </Button>
@@ -109,12 +111,12 @@ export default function Contracts() {
             <FileText className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No contracts yet</h3>
             <p className="text-gray-600 mb-6">Create your first contract to get started</p>
-            <Button className="mx-auto">Create Contract</Button>
+            <Button className="mx-auto" onClick={() => navigate('/app/contracts/new')} >Create Contract</Button>
           </Card>
         ) : (
           <div className="space-y-4">
             {contracts.map((contract, index) => {
-              const statusConfig = getStatusConfig(contract.status)
+              const statusConfig = getStatusConfig(contract.status || contract.contractStatus || 'draft')
               const StatusIcon = statusConfig.icon
 
               return (
@@ -143,11 +145,11 @@ export default function Contracts() {
 
                     <div className="flex items-center justify-between text-sm">
                       <div className="text-gray-600">
-                        {contract.fields.length} fields • Updated{' '}
-                        {new Date(contract.updatedAt).toLocaleDateString()}
+                        {contract.fields?.length || 0} fields • Updated{' '}
+                        {contract.updatedAt ? new Date(contract.updatedAt).toLocaleDateString() : 'Recently'}
                       </div>
                       
-                      {contract.status === 'draft' && (
+                      {(contract.status || contract.contractStatus) === 'draft' && (
                         <Button size="sm" variant="ghost" className="text-primary-600">
                           Continue Editing →
                         </Button>
@@ -155,16 +157,16 @@ export default function Contracts() {
                     </div>
 
                     {/* Progress Bar for drafts */}
-                    {contract.status === 'draft' && (
+                    {(contract.status || contract.contractStatus) === 'draft' && (
                       <div className="mt-4 pt-4 border-t border-gray-100">
                         <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
                           <span>Progress</span>
-                          <span>3 of {contract.fields.length} completed</span>
+                          <span>3 of {contract.fields?.length || 0} completed</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <motion.div
                             initial={{ width: 0 }}
-                            animate={{ width: `${(3 / contract.fields.length) * 100}%` }}
+                            animate={{ width: `${contract.fields?.length ? (3 / contract.fields.length) * 100 : 0}%` }}
                             transition={{ duration: 0.5, delay: 0.2 }}
                             className="bg-gradient-primary h-2 rounded-full"
                           />
