@@ -9,7 +9,7 @@ export interface RegisterData {
   
   name:string,
   surname:string,
-  mobile_number:string,
+  mobileNumber:string,
   email:string,
   password:string,
   confirmPassword:string

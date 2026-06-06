@@ -7,10 +7,12 @@ import { ChevronLeft } from 'lucide-react'
 
 export default function SignUp() {
   const [step, setStep] = useState(1)
+  const [name, setName] = useState('')
+  const [surname, setSurname] = useState('')
+  const [ mobileNumber, setmobileNumber] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+  const [confirmPassword, setconfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const { login, isAuthenticated } = useAuth()
@@ -28,13 +30,20 @@ export default function SignUp() {
       setError('Please enter your email')
       return
     }
-    if (step === 2 && !firstName) {
+    if (step === 2 && !name) {
       setError('Please enter your first name')
+      console.log(step)
       return
     }
-    if (step === 3 && !lastName) {
+    if (step === 3 && !surname) {
       setError('Please enter your last name')
       return
+    }
+    if (step === 4 && !mobileNumber){
+      setError('Please enter your mobile number')
+    }
+    if (step === 5 && !password){
+      setError('Please set password')
     }
     setStep(step + 1)
   }
@@ -46,14 +55,14 @@ export default function SignUp() {
 
   const handleSubmit = async () => {
     setError('')
-    if (!password) {
-      setError('Please enter your password')
+    if (!confirmPassword || confirmPassword !== password) {
+      setError('incorrect password')
       return
     }
 
     setIsLoading(true)
     try {
-      const response = await authService.register({ email, password, firstName, lastName })
+      const response = await authService.register({ name, surname, mobileNumber, email, password, confirmPassword })
       login(response.token, response.user)
     } catch (err) {
       setError('Registration failed. Please try again.')
@@ -106,7 +115,7 @@ export default function SignUp() {
               >
                 <input
                   type="email"
-                  placeholder="name@framer.com"
+                  placeholder="name@Transact.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, handleContinue)}
@@ -137,9 +146,9 @@ export default function SignUp() {
                 </button>
                 <input
                   type="text"
-                  placeholder="First name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, handleContinue)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
                 />
@@ -169,8 +178,8 @@ export default function SignUp() {
                 <input
                   type="text"
                   placeholder="Last name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  value={surname}
+                  onChange={(e) => setSurname(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, handleContinue)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
                 />
@@ -181,7 +190,7 @@ export default function SignUp() {
                   Continue
                 </button>
               </motion.div>
-            ) : (
+            ) : step === 4 ? (
               <motion.div
                 key="step4"
                 initial={{ opacity: 0, x: 40 }}
@@ -198,10 +207,74 @@ export default function SignUp() {
                   <span className="text-sm">Back</span>
                 </button>
                 <input
-                  type="password"
-                  placeholder="Create a password"
+                  type="text"
+                  placeholder="Mobile number"
+                  value={mobileNumber}
+                  onChange={(e) => setmobileNumber(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, handleContinue)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
+                />
+                <button
+                  onClick={handleContinue}
+                  className="w-full py-3 bg-black text-white font-medium rounded-xl hover:bg-gray-900 transition-colors"
+                >
+                  Continue
+                </button>
+              </motion.div>
+
+            ): step === 5 ? (
+              <motion.div
+                key="step5"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-3"
+              >
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-1 text-gray-400 hover:text-black transition-colors mb-1"
+                >
+                  <ChevronLeft size={16} />
+                  <span className="text-sm">Back</span>
+                </button>
+                <input
+                  type="text"
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, handleContinue)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
+                />
+                <button
+                  onClick={handleContinue}
+                  className="w-full py-3 bg-black text-white font-medium rounded-xl hover:bg-gray-900 transition-colors"
+                >
+                  Continue
+                </button>
+              </motion.div>
+
+            ):(
+              <motion.div
+                key="step6"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-3"
+              >
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-1 text-gray-400 hover:text-black transition-colors mb-1"
+                >
+                  <ChevronLeft size={16} />
+                  <span className="text-sm">Back</span>
+                </button>
+                <input
+                  type="password2"
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={(e) => setconfirmPassword(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, handleSubmit)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
                 />

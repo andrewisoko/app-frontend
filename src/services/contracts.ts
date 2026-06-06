@@ -68,7 +68,7 @@ export const contractsService = {
   },
 
   async sendContract(data: SendContractRequest): Promise<string> {
-    return apiClient.post<string>('/contracts/send-contract', data)
+    return apiClient.post<string>('/contract/send-contract', data)
   },
 
   async contractReceivedOnInbox(contractId: string, receiverId: string, accepted: boolean): Promise<any> {

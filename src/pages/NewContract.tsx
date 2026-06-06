@@ -37,6 +37,7 @@ export default function NewContract() {
   const [receiverInput, setReceiverInput] = useState('')
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
+   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchRecipients = async () => {
@@ -64,7 +65,7 @@ export default function NewContract() {
   }
 
   const handleSendContract = () => {
-    // TODO: Implement send contract logic
+    
     console.log('Sending contract:', {
       contractType,
       selectedReceivers,
@@ -74,7 +75,7 @@ export default function NewContract() {
       startDateTime,
       endDateTime,
     })
-    // Redirect to contracts page
+
     navigate('/app/contracts')
   }
 
@@ -106,7 +107,7 @@ export default function NewContract() {
               {[
                 { value: 'existing-user' as ContractType, label: 'Existing User' },
                 { value: 'new-user' as ContractType, label: 'New User' },
-                { value: 'external' as ContractType, label: 'External' },
+                
               ].map((type) => (
                 <motion.button
                   key={type.value}
@@ -204,7 +205,7 @@ export default function NewContract() {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Add receiver by name or email"
+                placeholder="Add receiver by username"
                 value={receiverInput}
                 onChange={(e) => setReceiverInput(e.target.value)}
                 className="flex-1 px-5 py-4 rounded-2xl text-white placeholder-white/40 outline-none"
@@ -243,10 +244,11 @@ export default function NewContract() {
             </div>
           </div>
 
-          {/* Amount Split */}
+          {/* Receiver split amount */}
           {splitType === 'amount' && (
+            <>
             <div>
-              <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Amount</div>
+              <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Sender amount</div>
               <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
                 <span className="text-white/60 text-lg">£</span>
                 <input
@@ -258,12 +260,27 @@ export default function NewContract() {
                 />
               </div>
             </div>
+            <div>
+              <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Receiver Amount</div>
+              <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <span className="text-white/60 text-lg">£</span>
+                <input
+                  type="text"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                  className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
+                />
+              </div>
+            </div>
+            </>
           )}
 
-          {/* Percentage Split */}
+          {/* sender split percentage */}
           {splitType === 'percentage' && (
+            <>
             <div>
-              <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Percentage Split</div>
+              <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Sender percentage Split</div>
               <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
                 <input
                   type="text"
@@ -280,6 +297,28 @@ export default function NewContract() {
                 </div>
               )}
             </div>
+              {/* Receiver split percentage */}
+            <div>
+              <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Receiver percentage Split</div>
+              <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <input
+                  type="text"
+                  placeholder="Your percentage"
+                  value={percentage}
+                  onChange={(e) => setPercentage(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
+                />
+                <span className="text-white/60 text-lg">%</span>
+              </div>
+              {selectedReceivers.length > 0 && (
+                <div className="text-xs text-white/50 mt-2 text-center">
+                  Add receivers to set percentages
+                </div>
+              )}
+            </div>
+
+            </>
+            
           )}
 
           {/* Time Agreement */}
