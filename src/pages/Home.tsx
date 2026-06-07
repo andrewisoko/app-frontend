@@ -44,7 +44,8 @@ const getCategoryIcon = (category?: string) => {
 }
 
 // Generate initials from name
-const getInitials = (name: string): string => {
+const getInitials = (name?: string): string => {
+  if (!name) return '??'
   const parts = name.trim().split(' ')
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
@@ -120,10 +121,12 @@ export default function Home() {
 
         // Fetch recipients
         try {
-          const recipientsData = await recipientsService.getRecipients()
-          setRecipients(recipientsData.slice(0, 5))
-        } catch {
-          // Recipients endpoint may not be ready
+          const recipientsData = await recipientsService.getRecipients(userProfile.id?.trim() ?? '')
+          console.log('rep data now',recipientsData)
+          setRecipients(recipientsData.slice(0,5))
+        } catch (error) {
+          console.error('Failed to fetch recipients:', error)
+  
         }
 
         // Fetch transactions
@@ -260,6 +263,7 @@ export default function Home() {
               ))
             ) : recipients.length > 0 ? (
               recipients.map((r) => {
+                if (!r.name) return null // Skip recipients without names
                 const initials = r.initials || getInitials(r.name)
                 const bgColor = r.avatarColor || getAvatarColor(r.name)
                 return (

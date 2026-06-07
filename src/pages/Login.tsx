@@ -90,7 +90,7 @@ export default function Login() {
               >
                 <input
                   type="email"
-                  placeholder="name@framer.com"
+                  placeholder="name@Transact.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleContinue()}

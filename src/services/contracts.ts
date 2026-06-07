@@ -21,7 +21,7 @@ export interface Contract{
     receiver: string[],
     split_agreement: string,
     contractStatus: string,
-    time_agreement:Date[]
+    time_agreement: string[]
     sender_percentage: number;
     sender_amount: number;
     receiver_percentage: number[];
@@ -42,16 +42,12 @@ export interface CreateContractRequest {
 export interface SendContractRequest extends Partial<SignInData> {
   sender: string
   receiver: string[]
-  split_agreement: string
-  contractStatus: string
-  time_agreement: Date[]
   sender_percentage: number
   sender_amount: number
+  time_agreement: string[]
   receiver_percentage: number[]
   receiver_amount: number[]
-  repayment_agreement: string
-  event_agreement: string
-  location_agreement: string
+  split_agreement: string
 }
 
 export const contractsService = {

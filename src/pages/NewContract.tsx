@@ -5,6 +5,7 @@ import { recipientsService, Recipient } from '@/services/recipients'
 import PageTransition from '@/components/animations/PageTransition'
 import { ArrowLeft, Send, UserPlus } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { contractsService } from '@/services/contracts'
 
 type ContractType = 'existing-user' | 'new-user' | 'external'
 type SplitType = 'amount' | 'percentage'
@@ -32,17 +33,20 @@ export default function NewContract() {
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [selectedReceivers, setSelectedReceivers] = useState<Recipient[]>([])
   const [splitType, setSplitType] = useState<SplitType>('percentage')
-  const [percentage, setPercentage] = useState('50')
-  const [amount, setAmount] = useState('')
-  const [receiverInput, setReceiverInput] = useState('')
+  const [senderPercentage, setSenderPercentage] = useState('50')
+  const [receiverPercentage, setReceiverPercentage] = useState('50')
+  const [senderAmount, setSenderAmount] = useState('')
+  const [receiverAmount, setReceiverAmount] = useState('')
+  const [receiver, setReceiver] = useState('')
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
-   const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const fetchRecipients = async () => {
+      if (!userProfile) return
       try {
-        const data = await recipientsService.getRecipients()
+        const data = await recipientsService.getRecipients(userProfile.id?.trim() ?? '')
         setRecipients(data)
       } catch (error) {
         console.error('Failed to fetch recipients:', error)
@@ -64,19 +68,67 @@ export default function NewContract() {
     })
   }
 
-  const handleSendContract = () => {
-    
-    console.log('Sending contract:', {
-      contractType,
-      selectedReceivers,
-      splitType,
-      percentage,
-      amount,
-      startDateTime,
-      endDateTime,
-    })
+  const handleSendContract = async () => {
+    // Validate required fields
+    if (selectedReceivers.length === 0 && !receiver.trim()) {
+      console.error('Please select or add at least one receiver')
+      alert('Please select or add at least one receiver')
+      return
+    }
 
-    navigate('/app/contracts')
+    if (!startDateTime || !endDateTime) {
+      console.error('Please set both start and end dates')
+      alert('Please set both start and end dates for the time agreement')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Build the time agreement array as ISO strings
+      const timeAgreement: string[] = [
+        new Date(startDateTime).toISOString(),
+        new Date(endDateTime).toISOString()
+      ]
+
+      // Extract receiver IDs - include selected receivers and manual input
+      const receiverIds = [
+        ...selectedReceivers.map((r) => r.id),
+        ...(receiver.trim() ? [receiver.trim()] : [])
+      ]
+
+      // Build receiver percentages/amounts arrays for all receivers
+      const totalReceivers = receiverIds.length
+      const receiverPercentages = Array(totalReceivers).fill(
+        splitType === 'percentage' ? parseFloat(receiverPercentage) || 0 : 0
+      )
+      const receiverAmounts = Array(totalReceivers).fill(
+        splitType === 'amount' ? parseFloat(receiverAmount) || 0 : 0
+      )
+
+      const requestData = {
+        sender: userProfile?.user_name || '',
+        receiver: receiverIds,
+        sender_percentage: splitType === 'percentage' ? parseFloat(senderPercentage) || 0 : 0,
+        sender_amount: splitType === 'amount' ? parseFloat(senderAmount) || 0 : 0,
+        time_agreement: timeAgreement,
+        receiver_percentage: receiverPercentages,
+        receiver_amount: receiverAmounts,
+        split_agreement: splitType,
+      }
+
+
+      
+
+      await contractsService.sendContract(requestData)
+      navigate('/app/contracts')
+      alert("Contract sent")
+    } catch (error) {
+      console.error('Failed to send contract:', error)
+      // You might want to show an error message to the user here
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const userName = userProfile?.user_name || user?.username || 'User'
@@ -206,8 +258,8 @@ export default function NewContract() {
               <input
                 type="text"
                 placeholder="Add receiver by username"
-                value={receiverInput}
-                onChange={(e) => setReceiverInput(e.target.value)}
+                value={receiver}
+                onChange={(e) => setReceiver(e.target.value)}
                 className="flex-1 px-5 py-4 rounded-2xl text-white placeholder-white/40 outline-none"
                 style={{ background: 'rgba(255,255,255,0.08)' }}
               />
@@ -254,8 +306,8 @@ export default function NewContract() {
                 <input
                   type="text"
                   placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                  value={ senderAmount}
+                  onChange={(e) => setSenderAmount(e.target.value.replace(/[^0-9.]/g, ''))}
                   className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
                 />
               </div>
@@ -267,8 +319,8 @@ export default function NewContract() {
                 <input
                   type="text"
                   placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                  value={ receiverAmount}
+                  onChange={(e) => setReceiverAmount(e.target.value.replace(/[^0-9.]/g, ''))}
                   className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
                 />
               </div>
@@ -285,8 +337,8 @@ export default function NewContract() {
                 <input
                   type="text"
                   placeholder="Your percentage"
-                  value={percentage}
-                  onChange={(e) => setPercentage(e.target.value.replace(/[^0-9]/g, ''))}
+                  value={senderPercentage}
+                  onChange={(e) => setSenderPercentage(e.target.value.replace(/[^0-9]/g, ''))}
                   className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
                 />
                 <span className="text-white/60 text-lg">%</span>
@@ -304,8 +356,8 @@ export default function NewContract() {
                 <input
                   type="text"
                   placeholder="Your percentage"
-                  value={percentage}
-                  onChange={(e) => setPercentage(e.target.value.replace(/[^0-9]/g, ''))}
+                  value={ receiverPercentage }
+                  onChange={(e) => setReceiverPercentage(e.target.value.replace(/[^0-9]/g, ''))}
                   className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
                 />
                 <span className="text-white/60 text-lg">%</span>
@@ -358,12 +410,12 @@ export default function NewContract() {
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSendContract}
-            disabled={selectedReceivers.length === 0}
+            disabled={(selectedReceivers.length === 0 && !receiver.trim()) || !startDateTime || !endDateTime || isLoading}
             className="w-full py-5 rounded-3xl text-white font-semibold text-lg flex items-center justify-center gap-2 disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
           >
             <Send size={20} />
-            Send Contract
+            {isLoading ? 'Sending...' : 'Send Contract'}
           </motion.button>
         </div>
 

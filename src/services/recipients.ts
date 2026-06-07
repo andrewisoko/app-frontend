@@ -11,16 +11,24 @@ export interface Recipient {
 }
 
 export const recipientsService = {
-  async getRecipients(): Promise<Recipient[]> {
-    return apiClient.get<Recipient[]>('/recipients')
+  async getRecipients(id: string): Promise<Recipient[]> {
+    // Backend returns array of usernames (strings)
+    const usernames = await apiClient.get<string[]>(`/user/recipients/${id}`)
+    
+    // Convert usernames to Recipient objects
+    return usernames.map(username => ({
+      id: username,
+      name: username,
+      createdAt: new Date().toISOString()
+    }))
   },
 
-  async getRecipient(id: string, recipientUsername:string): Promise<Recipient> {
-    return apiClient.get<Recipient>(`user/${id}/recipient/${recipientUsername}`)
+  async getRecipient(id: string, recipientUsername: string): Promise<Recipient> {
+    return apiClient.get<Recipient>(`/user/${id}/recipient/${recipientUsername}`)
   },
 
-  async addRecipient(userNameRecipient: string): Promise<Recipient> {
-    return apiClient.post<Recipient>('/user/add-recipients', userNameRecipient)
+  async addRecipient(): Promise<Recipient> {
+    return apiClient.post<Recipient>('/user/add-recipient')
   },
 
   async deleteRecipient(id: string): Promise<void> {
