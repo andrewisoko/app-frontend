@@ -16,7 +16,7 @@ export interface Contract{
     description?: string
     status?: string
     fields?: any[]
-    updatedAt?: string
+    updatedAt?: string,
     sender: string,
     receiver: string[],
     split_agreement: string,

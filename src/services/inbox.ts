@@ -8,17 +8,29 @@ export interface ReceivedContract {
   senderName: string
   cardNumber: string
   expiryDate: string
-  status: 'new' | 'accepted' | 'declined' | 'expired'
+  status: 'new' | 'accepted' | 'declined' | 'expired' | 'pending'
   receivedAt: string
   message?: string
 }
 
+export interface Inbox{
+  id:string
+  createdAt:Date;
+  updatedAt:Date;
+  mostRecent:Partial<Contract>[];
+  history: Partial<Contract>[];
+  user: User;
+  contract: Contract;
+
+}
+
 export const inboxService = {
-  async getReceivedContracts(): Promise<ReceivedContract[]> {
-    return apiClient.get<ReceivedContract[]>('/inbox/contracts')
-  },
-  async getInbox(inboxId:string): Promise<ReceivedContract[]> {
-    return apiClient.get<ReceivedContract[]>(`/inbox/${inboxId}`)
+
+  // async getReceivedContracts(): Promise<ReceivedContract[]> {
+  //   return apiClient.get<ReceivedContract[]>('/inbox/contracts')
+  // },
+  async getInbox(inboxId:string): Promise<Inbox> {
+    return apiClient.get<Inbox>(`/inbox/${inboxId}`)
   },
 
   // async acceptContract(id: string): Promise<void> {

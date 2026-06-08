@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { inboxService, ReceivedContract } from '@/services/inbox'
+import { Inbox, inboxService } from '@/services/inbox'
 import { contractsService } from '@/services/contracts'
 import { useAuth } from '@/hooks/useAuth'
 import Card from '@/components/ui/Card'
@@ -10,21 +10,25 @@ import { Inbox as InboxIcon, Check, X, CreditCard } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Inbox() {
-  const { user } = useAuth()
-  const [receivedContracts, setReceivedContracts] = useState<ReceivedContract[]>([])
+  const { user,userProfile } = useAuth()
+  const [Inbox, setInbox] = useState<Inbox>()
   const [isLoading, setIsLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
 
+
+
   useEffect(() => {
-    fetchReceivedContracts()
+    fetchInbox()
   }, [])
 
-  const fetchReceivedContracts = async () => {
+  
+  const fetchInbox = async () => {
+
     try {
-      const data = await inboxService.getReceivedContracts()
-      setReceivedContracts(data)
+      const data = await inboxService.getInbox(userProfile?.inbox || '')
+      setInbox(data)
     } catch (error) {
-      console.error('Failed to fetch received contracts:', error)
+      console.error('Failed to fetch inbox:', error)
     } finally {
       setIsLoading(false)
     }
@@ -35,7 +39,7 @@ export default function Inbox() {
     setProcessingId(id)
     try {
       await contractsService.contractReceivedOnInbox(id, user.id, true)
-      setReceivedContracts((prev) => prev.filter((contract) => contract.id !== id))
+      setReceivedContract((prev) => prev.filter((contract) => contract.id !== id))
     } catch (error) {
       console.error('Failed to accept contract:', error)
     } finally {

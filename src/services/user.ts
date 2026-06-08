@@ -1,5 +1,6 @@
 import { apiClient } from './api'
 
+
 export interface UserProfile {
   id: string
   role: string
@@ -10,7 +11,8 @@ export interface UserProfile {
   user_name: string
   email: string
   accounts: string // JSON stringified array of account IDs
-  recipients: unknown[]
+  inbox: unknown
+  recipients: string[]
   created_contract: unknown | null
   main_bank: string
   created_at: string
