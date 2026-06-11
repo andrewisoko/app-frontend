@@ -122,7 +122,6 @@ export default function Home() {
         // Fetch recipients
         try {
           const recipientsData = await recipientsService.getRecipients(userProfile.id?.trim() ?? '')
-          console.log('rep data now',recipientsData)
           setRecipients(recipientsData.slice(0,5))
         } catch (error) {
           console.error('Failed to fetch recipients:', error)

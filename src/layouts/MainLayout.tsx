@@ -3,6 +3,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Home, CreditCard, Inbox, FileText, User } from 'lucide-react'
 import { inboxService } from '@/services/inbox'
+import { useAuth } from '@/hooks/useAuth'
 
 const navItems = [
   { path: '/app', icon: Home, label: 'Home' },
@@ -14,13 +15,32 @@ const navItems = [
 
 export default function MainLayout() {
   const location = useLocation()
+  const { user, userProfile } = useAuth()
   const [inboxCount, setInboxCount] = useState(0)
 
   useEffect(() => {
-    inboxService.getReceivedContracts()
-      .then((cards) => setInboxCount(cards.filter((c) => c.status === 'new').length))
+    // Extract inbox ID - handle both string and object
+    let inboxId: string | undefined
+    if (userProfile?.inbox) {
+      if (typeof userProfile.inbox === 'string') {
+        inboxId = userProfile.inbox
+      } else if (typeof userProfile.inbox === 'object' && 'id' in userProfile.inbox) {
+        inboxId = userProfile.inbox.id
+      }
+    }
+    
+    // Try inbox ID first, fallback to user ID
+    const fetchId = inboxId || user?.id
+    if (!fetchId) return
+    
+    inboxService.getInbox(fetchId)
+      .then((inbox) => {
+        // Count pending contracts in mostRecent
+        const pendingCount = inbox.most_recent.filter((c) => c.status === 'pending').length || 0
+        setInboxCount(pendingCount)
+      })
       .catch(() => setInboxCount(0))
-  }, [])
+  }, [userProfile?.inbox, user?.id])
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #140021 0%, #1B012B 100%)' }}>

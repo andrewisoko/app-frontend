@@ -11,7 +11,7 @@ export interface UserProfile {
   user_name: string
   email: string
   accounts: string // JSON stringified array of account IDs
-  inbox: unknown
+  inbox: string | { id: string } // Can be either ID string or object with id
   recipients: string[]
   created_contract: unknown | null
   main_bank: string
@@ -29,6 +29,9 @@ export interface UpdateProfileData {
 
 export const userService = {
   async getProfile(userId: string): Promise<UserProfile> {
+    return apiClient.get<UserProfile>(`/user/${userId}`)
+  },
+  async getProfileByUsername(userId: string): Promise<UserProfile> {
     return apiClient.get<UserProfile>(`/user/${userId}`)
   },
 

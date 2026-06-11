@@ -92,23 +92,24 @@ export default function NewContract() {
       ]
 
       // Extract receiver IDs - include selected receivers and manual input
-      const receiverIds = [
-        ...selectedReceivers.map((r) => r.id),
+      const receiverArray = [
+        ...selectedReceivers.map((r) => r),
         ...(receiver.trim() ? [receiver.trim()] : [])
       ]
 
       // Build receiver percentages/amounts arrays for all receivers
-      const totalReceivers = receiverIds.length
+      const totalReceivers = receiverArray.length
       const receiverPercentages = Array(totalReceivers).fill(
-        splitType === 'percentage' ? parseFloat(receiverPercentage) || 0 : 0
+        splitType === 'percentage' ? parseFloat(receiverPercentage) || [] : []
       )
       const receiverAmounts = Array(totalReceivers).fill(
-        splitType === 'amount' ? parseFloat(receiverAmount) || 0 : 0
+        splitType === 'amount' ? parseFloat(receiverAmount) || [] : []
       )
 
       const requestData = {
         sender: userProfile?.user_name || '',
-        receiver: receiverIds,
+        receiver: [receiver],
+        all_usernames:[userProfile?.user_name || '', receiver],
         sender_percentage: splitType === 'percentage' ? parseFloat(senderPercentage) || 0 : 0,
         sender_amount: splitType === 'amount' ? parseFloat(senderAmount) || 0 : 0,
         time_agreement: timeAgreement,

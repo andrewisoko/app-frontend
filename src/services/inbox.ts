@@ -17,10 +17,9 @@ export interface Inbox{
   id:string
   createdAt:Date;
   updatedAt:Date;
-  mostRecent:Partial<Contract>[];
+  most_recent:Partial<Contract>[];
   history: Partial<Contract>[];
   user: User;
-  contract: Contract;
 
 }
 

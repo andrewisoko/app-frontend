@@ -19,6 +19,7 @@ export interface Contract{
     updatedAt?: string,
     sender: string,
     receiver: string[],
+    all_usernames:string[],
     split_agreement: string,
     contractStatus: string,
     time_agreement: string[]
@@ -42,6 +43,7 @@ export interface CreateContractRequest {
 export interface SendContractRequest extends Partial<SignInData> {
   sender: string
   receiver: string[]
+  all_usernames:string[]
   sender_percentage: number
   sender_amount: number
   time_agreement: string[]
@@ -51,9 +53,9 @@ export interface SendContractRequest extends Partial<SignInData> {
 }
 
 export const contractsService = {
-  async getContracts(): Promise<Contract[]> {
-    return apiClient.get<Contract[]>('/contracts')
-  },
+  // async getContracts(): Promise<Contract[]> {
+  //   return apiClient.get<Contract[]>('contract/contracts')
+  // },
 
   async getContract(id: string): Promise<Contract> {
     return apiClient.get<Contract>(`/contracts/${id}`)
