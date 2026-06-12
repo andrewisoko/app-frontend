@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { Inbox, inboxService } from '@/services/inbox'
 import { Contract, contractsService } from '@/services/contracts'
 import { useAuth } from '@/hooks/useAuth'
-import { userService } from '@/services/user'
+// import { userService } from '@/services/user'
 import Button from '@/components/ui/Button'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import PageTransition from '@/components/animations/PageTransition'
 import { Check, X, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, ChevronRight } from 'lucide-react'
+
 
 export default function InboxPage() {
   const { user, userProfile } = useAuth()
@@ -15,6 +17,8 @@ export default function InboxPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [selectedContract, setSelectedContract] = useState<Partial<Contract> | null>(null)
+  const [showMostRecent, setShowMostRecent] = useState(true)
+  const [showHistory, setShowHistory] = useState(true)
  
 
   useEffect(() => {
@@ -250,8 +254,22 @@ export default function InboxPage() {
             {/* Most Recent Contracts */}
             {inbox?.most_recent && inbox.most_recent.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-white mb-3">Most Recent</h2>
-                <div className="space-y-3">
+                <div
+                  className="flex items-center justify-between mb-3 cursor-pointer"
+                  onClick={() => setShowMostRecent(!showMostRecent)}
+                >
+                    <h2 className="text-lg font-semibold text-white">
+                      Most Recent
+                    </h2>
+
+                    {showMostRecent ? (
+                      <ChevronDown size={20} className="text-white" />
+                    ) : (
+                      <ChevronRight size={20} className="text-white" />
+                    )}
+                  </div>
+                  {showMostRecent && (
+                  <div className="space-y-3">
                   {inbox.most_recent.map((contract, index) => {
                    
                    
@@ -287,7 +305,7 @@ export default function InboxPage() {
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-white truncate mb-1">
-                                {senderUsername} — 'Contract'
+                                {senderUsername} — Contract
                               </h3>
                               <div className="flex items-center gap-3 text-sm flex-wrap">
                                 <div className="flex items-center gap-1.5">
@@ -307,24 +325,39 @@ export default function InboxPage() {
                           </div>
                         </div>
                       </motion.div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+                          )
+                      })}
+                    </div>
+
+                      )}
+                  </div>
+                )}
 
             {/* History */}
             {inbox?.history.filter(Boolean) && inbox.history.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-white mb-3">History</h2>
-                <div className="space-y-3">
-                  {inbox.history
-                    .filter((c): c is Contract => c !== null && c !== undefined)
-                    .map((contract, index) => {
-                    console.log('contracts:', inbox.history)
-                    const senderUsername = contract.all_usernames?.[0]
-                    console.log('username', senderUsername)
-                    const timeAgreement = formatTimeAgreement(contract.time_agreement)
+                <div
+                    className="flex items-center justify-between mb-3 cursor-pointer"
+                    onClick={() => setShowHistory(!showHistory)}
+                      >
+                      <h2 className="text-lg font-semibold text-white">
+                        History
+                      </h2>
+                      {showHistory ? (
+                        <ChevronDown size={20} className="text-white" />
+                      ) : (
+                        <ChevronRight size={20} className="text-white" />
+                      )}
+                    </div>
+                  { showHistory &&(
+                 <div className="space-y-3">
+                    {inbox.history
+                      .filter((c): c is Contract => c !== null && c !== undefined)
+                      .map((contract, index) => {
+                      console.log('contracts:', inbox.history)
+                      const senderUsername = contract.all_usernames?.[0]
+                      console.log('username', senderUsername)
+                      const timeAgreement = formatTimeAgreement(contract.time_agreement)
                     
                     return (
                       <motion.div
@@ -378,6 +411,8 @@ export default function InboxPage() {
                     )
                   })}
                 </div>
+                    
+                  )}
               </div>
             )}
           </div>
