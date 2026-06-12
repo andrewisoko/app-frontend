@@ -19,9 +19,9 @@ export default function InboxPage() {
 
   useEffect(() => {
     const fetchInbox = async () => {
-      console.log('=== INBOX FETCH DEBUG ===')
-      console.log('userProfile:', userProfile)
-      console.log('user:', user)
+      // console.log('=== INBOX FETCH DEBUG ===')
+      // console.log('userProfile:', userProfile)
+      // console.log('user:', user)
       
       // Extract inbox ID - handle both string and object
       let inboxId: string | undefined
@@ -47,11 +47,13 @@ export default function InboxPage() {
       
       setIsLoading(true)
       try {
-        console.log('✅ Making API call to:', `/api/inbox/${fetchId}`)
         const data = await inboxService.getInbox(fetchId)
-        console.log('✅ Inbox data received:', data)
-        console.log('- mostRecent length:', data?.most_recent.length || 0)
-        console.log('- history length:', data?.history?.length || 0)
+        // console.log('✅ Making API call to:', `/api/inbox/${fetchId}`)
+        // console.log('✅ Inbox data received:', data)
+        // console.log('- mostRecent length:', data?.most_recent.length || 0)
+        // console.log('- history length:', data?.history?.length || 0)
+        // console.log('contract status' ,selectedContract?.contract_status)
+       
         setInbox(data)
       } catch (error) {
         console.error('❌ Failed to fetch inbox:', error)
@@ -285,12 +287,12 @@ export default function InboxPage() {
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-white truncate mb-1">
-                                {senderUsername} — {contract.title || 'Contract'}
+                                {senderUsername} — 'Contract'
                               </h3>
                               <div className="flex items-center gap-3 text-sm flex-wrap">
                                 <div className="flex items-center gap-1.5">
-                                  <div className={`w-2 h-2 rounded-full ${getStatusColor(contract.status || 'pending')}`} />
-                                  <span className="text-gray-300">{getStatusText(contract.status || 'pending')}</span>
+                                  <div className={`w-2 h-2 rounded-full ${getStatusColor(contract.contract_status || 'pending')}`} />
+                                  <span className="text-gray-300">{getStatusText(contract.contract_status || 'pending')}</span>
                                 </div>
                                 {timeAgreement && (
                                   <>
@@ -357,8 +359,8 @@ export default function InboxPage() {
                               </h3>
                               <div className="flex items-center gap-3 text-sm flex-wrap">
                                 <div className="flex items-center gap-1.5">
-                                  <div className={`w-2 h-2 rounded-full ${getStatusColor(contract.status || 'pending')}`} />
-                                  <span className="text-gray-300">{getStatusText(contract.status || 'pending')}</span>
+                                  <div className={`w-2 h-2 rounded-full ${getStatusColor(contract.contract_status || 'pending')}`} />
+                                  <span className="text-gray-300">{getStatusText(contract.contract_status || 'pending')}</span>
                                 </div>
                                 {timeAgreement && (
                                   <>
@@ -439,15 +441,29 @@ export default function InboxPage() {
                         {selectedContract.all_usernames?.[0] || 'Unknown Sender'}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedContract.status || 'pending')}`} />
-                        <span className="text-sm text-gray-300">{getStatusText(selectedContract.status || 'pending')}</span>
+                        {
+                          selectedContract.contract_status === 'pending' ? (
+                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#FCD34D' }}>
+                            {selectedContract.contract_status.toLocaleUpperCase() || 'PENDING'}
+                          </span>
+                        ): selectedContract.contract_status === 'accpeted' ? (
+                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#4ADE80' }}>
+                            {selectedContract.contract_status.toLocaleUpperCase() || 'ACCEPTED'}
+                          </span>
+                        ): selectedContract.contract_status === 'declined' ? (
+                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#F87171' }}>
+                            {selectedContract.contract_status.toLocaleUpperCase() || 'DECLINED'}
+                          </span>
+                        ): selectedContract.contract_status === 'expired' ? (
+                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#9CA3AF' }}>
+                            {selectedContract.contract_status.toLocaleUpperCase() || 'EXPIRED'}
+                          </span>
+                          ): null
+                        }
                       </div>
                     </div>
                   </div>
 
-                  {selectedContract.description && (
-                    <p className="text-gray-300 text-sm">{selectedContract.description}</p>
-                  )}
                 </div>
 
                 {/* Full Contract Details */}
@@ -466,44 +482,60 @@ export default function InboxPage() {
                   )}
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Status</span>
-                    <span className="text-white font-medium">{getStatusText(selectedContract.contractStatus || selectedContract.status || 'pending')}</span>
+                    <span className="text-white font-medium">{getStatusText( selectedContract.contract_status || 'Pending')}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Split Agreement</span>
                     <span className="text-white font-medium">{selectedContract.split_agreement || 'N/A'}</span>
                   </div>
                 
-                {selectedContract.time_agreement && selectedContract.time_agreement.length > 0 && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-gray-400">Time Agreement</span>
-                        <div className="flex flex-col gap-1">
-                          {[
-                            { label: "Start", date: selectedContract.time_agreement[0] },
-                            { label: "End",   date: selectedContract.time_agreement[1] },
-                          ]
-                          .filter(({ date }) => Boolean(date))
-                          .map(({ label, date }) => {
-                            const parsed = new Date(date)
-                            const formatted = isNaN(parsed.getTime())
-                              ? date
-                              : parsed.toLocaleString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
+                {selectedContract.time_agreement && (
+                <div className="flex justify-between items-center" >
+                  <span className="text-gray-400">Time Agreement</span>
 
-                            return (
-                              <div key={label} className="flex gap-2">
-                                <span className="text-gray-400 text-sm w-10">{label}:</span>
-                                <span className="text-white font-medium text-sm">{formatted}</span>
-                              </div>
-                            )
-                          })}
+                  {(() => {
+                    const raw = selectedContract.time_agreement as unknown as string
+                    const dates = raw
+                      .replace(/^\{|\}$/g, '') 
+                      .split(',')
+                      .map(date => date.replace(/"/g, '').trim())
+
+                    return (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex gap-2">
+                          <span className="text-gray-400 text-sm w-10">
+                            Start:
+                          </span>
+                          <span className="text-white font-medium text-sm">
+                            {new Date(dates[0]).toLocaleString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <span className="text-gray-400 text-sm w-10">
+                            End:
+                          </span>
+                          <span className="text-white font-medium text-sm">
+                            {new Date(dates[1]).toLocaleString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
                         </div>
                       </div>
-                    )}
+                    )
+                  })()}
+                </div>
+              )}
                   {selectedContract.sender_percentage !== undefined &&(
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Sender Percentage</span>
@@ -554,27 +586,18 @@ export default function InboxPage() {
                       <span className="text-white font-medium">{formatDate(selectedContract.updatedAt)}</span>
                     </div>
                   )}
-                  {selectedContract.fields && selectedContract.fields.length > 0 && (
-                    <div className="flex flex-col gap-1">
-                      <span className="text-gray-400">Additional Fields</span>
-                      <div className="text-white font-medium text-sm space-y-1">
-                        {selectedContract.fields.map((field: any, idx: number) => (
-                          <div key={idx} className="pl-2">
-                            {JSON.stringify(field)}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* Action Buttons */}
-              {(!selectedContract.status || selectedContract.status === 'pending' || selectedContract.status === 'new') && (
+              {(!selectedContract.contract_status || selectedContract.contract_status === 'pending' || selectedContract.contract_status === 'new') && (
                 <div className="flex gap-3">
                   <Button
-                    variant="outline"
-                    className="flex-1 py-3 rounded-xl border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    // variant="outline"
+                    // className="flex-1 py-3 rounded-xl border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                     variant="primary"
+                    className="flex-1 py-3 rounded-xl"
+                     style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'}}
                     onClick={() => {
                       if (selectedContract.id) {
                         handleDecline(selectedContract.id)

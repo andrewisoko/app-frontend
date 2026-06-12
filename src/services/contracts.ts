@@ -12,16 +12,12 @@ export interface SignInData{
 
 export interface Contract{
     id?: string
-    title?: string
-    description?: string
-    status?: string
-    fields?: any[]
     updatedAt?: string,
     sender: string,
     receiver: string[],
     all_usernames:string[],
     split_agreement: string,
-    contractStatus: string,
+    contract_status: string,
     time_agreement: string[]
     sender_percentage: number;
     sender_amount: number;
