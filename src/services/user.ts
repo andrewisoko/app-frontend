@@ -1,4 +1,5 @@
 import { apiClient } from './api'
+import { Contract } from './contracts'
 
 
 export interface UserProfile {
@@ -13,7 +14,7 @@ export interface UserProfile {
   accounts: string // JSON stringified array of account IDs
   inbox: string | { id: string } // Can be either ID string or object with id
   recipients: string[]
-  created_contract: unknown | null
+  created_contract:  Contract[]
   main_bank: string
   created_at: string
   updated_at: string

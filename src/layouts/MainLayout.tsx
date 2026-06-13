@@ -36,7 +36,7 @@ export default function MainLayout() {
     inboxService.getInbox(fetchId)
       .then((inbox) => {
         // Count pending contracts in mostRecent
-        const pendingCount = inbox.most_recent.filter((c) => c.status === 'pending').length || 0
+        const pendingCount = inbox.most_recent.filter((c) => c.contract_status === 'pending').length || 0
         setInboxCount(pendingCount)
       })
       .catch(() => setInboxCount(0))

@@ -65,10 +65,10 @@ export const contractsService = {
     return apiClient.post<string>('/contract/send-contract', data)
   },
 
-  async contractReceivedOnInbox(contractId: string, receiverId: string, accepted: boolean): Promise<any> {
+  async contractReceivedOnInbox(contractId: string, receiverIds: string, accepted: boolean): Promise<any> {
     return apiClient.post('/inbox/receiver-inbox-contract', {
       contractId,
-      receiverId,
+      receiverIds,
       accepted,
     })
   },

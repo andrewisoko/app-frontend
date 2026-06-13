@@ -40,8 +40,8 @@ export default function InboxPage() {
       // Fallback to user ID if no inbox ID
       const fetchId = inboxId || user?.id
       
-      console.log('Extracted inbox ID:', inboxId)
-      console.log('Final fetch ID:', fetchId)
+      // console.log('Extracted inbox ID:', inboxId)
+      // console.log('Final fetch ID:', fetchId)
       
       if (!fetchId) {
         console.log('❌ No inbox or user ID found - cannot fetch')
@@ -53,7 +53,7 @@ export default function InboxPage() {
       try {
         const data = await inboxService.getInbox(fetchId)
         // console.log('✅ Making API call to:', `/api/inbox/${fetchId}`)
-        // console.log('✅ Inbox data received:', data)
+        console.log('✅ Inbox data received:', data)
         // console.log('- mostRecent length:', data?.most_recent.length || 0)
         // console.log('- history length:', data?.history?.length || 0)
         // console.log('contract status' ,selectedContract?.contract_status)
@@ -99,6 +99,8 @@ export default function InboxPage() {
     setProcessingId(id)
     try {
       await contractsService.contractReceivedOnInbox(id, user.id, false)
+      console.log('user id', user.id)
+      console.log('constract id', id)
       setInbox((prev) => {
         if (!prev) return prev
         return {
@@ -227,6 +229,7 @@ export default function InboxPage() {
     return String(timeAgreement)
   }
 
+
   return (
     <PageTransition>
       <div className="p-6 space-y-6" style={{ minHeight: 'calc(100vh - 80px)' }}>
@@ -354,9 +357,9 @@ export default function InboxPage() {
                     {inbox.history
                       .filter((c): c is Contract => c !== null && c !== undefined)
                       .map((contract, index) => {
-                      console.log('contracts:', inbox.history)
+                      // console.log('contracts:', inbox.history)
                       const senderUsername = contract.all_usernames?.[0]
-                      console.log('username', senderUsername)
+                      // console.log('username', senderUsername)
                       const timeAgreement = formatTimeAgreement(contract.time_agreement)
                     
                     return (
@@ -510,9 +513,10 @@ export default function InboxPage() {
                     <span className="text-white font-medium">{selectedContract.all_usernames?.[0] || 'Unknown Sender'}</span>
                   </div>
                   {selectedContract.receiver && selectedContract.receiver.length > 0 && (
+
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Receivers</span>
-                      <span className="text-white font-medium">{userProfile?.user_name}</span>
+                      <span className="text-white font-medium">{selectedContract.all_usernames?.slice(1).join(' • ')}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
@@ -628,9 +632,7 @@ export default function InboxPage() {
               {(!selectedContract.contract_status || selectedContract.contract_status === 'pending' || selectedContract.contract_status === 'new') && (
                 <div className="flex gap-3">
                   <Button
-                    // variant="outline"
-                    // className="flex-1 py-3 rounded-xl border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                     variant="primary"
+            
                     className="flex-1 py-3 rounded-xl"
                      style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'}}
                     onClick={() => {
