@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { cardsService, VirtualCard } from '@/services/cards'
+import { accountsService } from '@/services/accounts'
 import PageTransition from '@/components/animations/PageTransition'
 import { CreditCard, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Cards() {
-  const { userProfile } = useAuth()
+  const { user, userProfile } = useAuth()
   const [cards, setCards] = useState<VirtualCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!userProfile) return
+    if (!userProfile || !user) return
 
     const fetchCards = async () => {
       setIsLoading(true)
@@ -30,12 +31,19 @@ export default function Cards() {
             .filter(Boolean)
         }
 
-        // Fetch cards for all accounts
+        console.log('Parsed account IDs:', accountIds)
+
+        // Fetch account details to get account numbers
         if (accountIds.length > 0) {
           const allCards: VirtualCard[] = []
           for (const accountId of accountIds) {
             try {
-              const accountCards = await cardsService.getCardsByAccountNumber(accountId)
+              // Fetch account to get the account number
+              const { account } = await accountsService.findAccount(user.username, accountId)
+              console.log(`Account ${accountId} has account number:`, account.accountNumber)
+              
+              // Now fetch cards using the account number
+              const accountCards = await cardsService.getCardsByAccountNumber(account.accountNumber.toString())
               allCards.push(...accountCards)
             } catch (error) {
               console.error(`Failed to fetch cards for account ${accountId}:`, error)
@@ -51,16 +59,18 @@ export default function Cards() {
     }
 
     fetchCards()
-  }, [userProfile])
+  }, [userProfile, user])
 
   const formatCardNumber = (cardNumber: string) => {
     // Format as: •••• •••• •••• 8492
+    if (!cardNumber) return '•••• •••• •••• ••••'
     const lastFour = cardNumber.slice(-4)
     return `•••• •••• •••• ${lastFour}`
   }
 
   const formatExpiry = (expiry: string) => {
     // Format as MM/YY
+    if (!expiry) return 'N/A'
     if (expiry.includes('/')) return expiry
     if (expiry.length >= 4) {
       const month = expiry.slice(0, 2)
