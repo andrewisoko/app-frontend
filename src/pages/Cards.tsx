@@ -12,6 +12,8 @@ export default function Cards() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState(0)
   const [showQR, setShowQR] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>()
+  const [qrLoading, setQrLoading] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [frozenCards, setFrozenCards] = useState<Set<string>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -73,6 +75,13 @@ export default function Cards() {
     return expiry
   }
 
+    const formatPan = (pan?: string) => {
+    if (!pan) return '•••• •••• •••• ••••'
+    const digits = pan.replace(/\D/g, '')
+    return digits.match(/.{1,4}/g)?.join(' ') ?? digits
+  }
+
+
   const activeCard = cards[activeIndex]
   const isFrozen = activeCard ? frozenCards.has(activeCard.id) : false
 
@@ -83,6 +92,23 @@ export default function Cards() {
     const index = Math.round(scrollLeft / cardWidth)
     setActiveIndex(Math.min(index, cards.length - 1))
   }
+
+ const handleShowQR = async () => {
+    if (!activeCard) return
+
+    try {
+      setQrLoading(true)
+
+      const qr = await cardsService.generateQRcode(activeCard.POS_token)
+
+      setQrCode(qr)
+      setShowQR(true)
+    } catch (error) {
+      console.error('Failed to generate QR code', error)
+    } finally {
+      setQrLoading(false)
+    }
+}
 
   const toggleFreeze = () => {
     if (!activeCard) return
@@ -215,7 +241,7 @@ export default function Cards() {
                         className="text-lg font-medium text-white tracking-widest"
                         style={{ letterSpacing: '0.15em', filter: frozen ? 'blur(3px)' : 'none', transition: 'filter 0.3s' }}
                       >
-                        {formatCardNumber(card.card_number)}
+                        {formatCardNumber(card.pan)}
                       </div>
                     </div>
 
@@ -255,22 +281,13 @@ export default function Cards() {
             )}
 
             {/* Card name + last four */}
-            {activeCard && (
-              <div className="text-center mt-3 mb-6">
-                <p className="text-white font-semibold text-base tracking-wide">
-                  {userProfile?.name ?? 'Card Holder'} &nbsp;
-                  <span className="text-white/50 font-normal">
-                    •••• {activeCard.card_number?.slice(-4) ?? '••••'}
-                  </span>
-                </p>
-              </div>
-            )}
+           
 
             {/* Action buttons */}
-            <div className="flex justify-center gap-8 px-6 mb-6">
+            <div className="flex  gap-8  ml-24 mt-6 mb-6">
               {/* QR Code */}
               <button
-                onClick={() => setShowQR(true)}
+                onClick={handleShowQR}
                 className="flex flex-col items-center gap-2 group"
               >
                 <div
@@ -325,19 +342,21 @@ export default function Cards() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-end justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center px-6"
               style={{ background: 'rgba(0,0,0,0.7)' }}
               onClick={() => setShowQR(false)}
             >
               <motion.div
-                initial={{ y: 80, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 80, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="w-full max-w-sm rounded-t-3xl px-6 pt-6 pb-10"
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.92, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                className="w-full max-w-sm rounded-3xl px-6 pt-2 pb-6"
                 style={{ background: '#1B012B' }}
                 onClick={e => e.stopPropagation()}
               >
+
+
                 {/* Drag handle */}
                 <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6" />
 
@@ -357,28 +376,23 @@ export default function Cards() {
                   className="mx-auto rounded-2xl flex flex-col items-center justify-center mb-5"
                   style={{ width: '220px', height: '220px', background: '#ffffff' }}
                 >
-                  {/* Simple QR grid approximation */}
-                  <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
-                    {/* Top-left finder */}
-                    <rect x="10" y="10" width="50" height="50" rx="4" fill="#140021"/>
-                    <rect x="20" y="20" width="30" height="30" rx="2" fill="white"/>
-                    <rect x="27" y="27" width="16" height="16" rx="1" fill="#140021"/>
-                    {/* Top-right finder */}
-                    <rect x="120" y="10" width="50" height="50" rx="4" fill="#140021"/>
-                    <rect x="130" y="20" width="30" height="30" rx="2" fill="white"/>
-                    <rect x="137" y="27" width="16" height="16" rx="1" fill="#140021"/>
-                    {/* Bottom-left finder */}
-                    <rect x="10" y="120" width="50" height="50" rx="4" fill="#140021"/>
-                    <rect x="20" y="130" width="30" height="30" rx="2" fill="white"/>
-                    <rect x="27" y="137" width="16" height="16" rx="1" fill="#140021"/>
-                    {/* Data modules (random-looking pattern) */}
-                    {[75,85,95,105,115,75,95,115,75,85,105,115,75,85,95,105].map((x, i) => (
-                      <rect key={i} x={x} y={75 + (i % 5) * 10} width="8" height="8" rx="1" fill="#140021"/>
-                    ))}
-                    {[120,130,140,150,160,120,140,160,120,130,150,160].map((y, i) => (
-                      <rect key={`b${i}`} x={75 + (i % 4) * 12} y={y} width="8" height="8" rx="1" fill="#140021"/>
-                    ))}
-                  </svg>
+                  {/* QR code image */}
+                <div
+                    className="mx-auto rounded-2xl flex items-center justify-center mb-5"
+                    style={{ width: '220px', height: '220px', background: '#ffffff' }}
+                  >
+                    {qrLoading ? (
+                      <span>Loading...</span>
+                    ) : qrCode ? (
+                      <img
+                        src={qrCode}
+                        alt="QR Code"
+                        className="w-[180px] h-[180px]"
+                      />
+                    ) : (
+                      <span>QR unavailable</span>
+                    )}
+                  </div>
                 </div>
 
                 <p className="text-center text-white/60 text-sm leading-relaxed px-2">
@@ -391,7 +405,7 @@ export default function Cards() {
                 >
                   <p className="text-white/50 text-xs uppercase tracking-wider mb-0.5">Charging card</p>
                   <p className="text-white text-sm font-medium">
-                    •••• {activeCard.card_number?.slice(-4) ?? '••••'} &middot; {activeCard.card_type}
+                     {formatPan(activeCard.pan)} 
                   </p>
                 </div>
               </motion.div>
@@ -402,23 +416,24 @@ export default function Cards() {
         {/* Card Details Modal */}
         <AnimatePresence>
           {showDetails && activeCard && (
-            <motion.div
+           <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-end justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center px-6"
               style={{ background: 'rgba(0,0,0,0.7)' }}
               onClick={() => setShowDetails(false)}
             >
               <motion.div
-                initial={{ y: 80, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 80, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="w-full max-w-sm rounded-t-3xl px-6 pt-6 pb-10"
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.92, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                className="w-full max-w-sm rounded-3xl px-6 pt-6 pb-7"
                 style={{ background: '#1B012B' }}
                 onClick={e => e.stopPropagation()}
               >
+
                 <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6" />
 
                 <div className="flex items-center justify-between mb-6">
@@ -434,10 +449,10 @@ export default function Cards() {
 
                 <div className="space-y-3">
                   {[
-                    { label: 'Card number', value: formatCardNumber(activeCard.card_number) },
+                    { label: 'Card number', value: formatPan(activeCard.pan) },
                     { label: 'Expiry', value: formatExpiry(activeCard.expiry) },
                     { label: 'Type', value: activeCard.card_type },
-                    { label: 'CVV', value: '•••' },
+                    { label: 'CVV', value: activeCard.CVC },
                   ].map(({ label, value }) => (
                     <div
                       key={label}

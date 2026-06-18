@@ -2,15 +2,20 @@ import { apiClient } from './api'
 
 export interface VirtualCard {
   id: string
-  card_number: string
-  cardholder_name: string
-  expiry: string
-  cvv: string
   card_type: 'main' | 'temporary'
-  status: 'active' | 'inactive' | 'expired'
-  balance?: number
-  created_at: string
+  pan: string
   account_number: string
+  CVC: string
+  expiry: string
+  cardholder_name: string
+  billing_address:string
+  POS_token:string
+  status: 'active' | 'inactive' | 'expired'
+  created_at: string
+  updated_at: string
+  account_users?:string[]
+  expiry_time?:string
+  balance?: number
 }
 
 export interface CreateMainCardRequest {
@@ -46,7 +51,7 @@ export const cardsService = {
   },
 
   async generateQRcode( token:string ){
-    return apiClient.post<VirtualCard>('/virtual-card/generate-qr-code', token)
+    return apiClient.post<string>('/virtual-card/generate-qr-code',{token})
   },
 
   async toggleCardStatus(id: string, status: 'active' | 'inactive'): Promise<VirtualCard> {
