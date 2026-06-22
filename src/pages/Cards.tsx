@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { cardsService, VirtualCard } from '@/services/cards'
-import { accountsService } from '@/services/accounts'
 import PageTransition from '@/components/animations/PageTransition'
 import { CreditCard, Plus, X, QrCode, Info, Snowflake } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,47 +17,25 @@ export default function Cards() {
   const [frozenCards, setFrozenCards] = useState<Set<string>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!userProfile || !user) return
+useEffect(() => {
+  if (!userProfile || !user) return;
 
-    const fetchCards = async () => {
-      setIsLoading(true)
-      try {
-        const rawAccounts = userProfile.accounts?.trim() ?? ''
-        let accountIds: string[] = []
-
-        if (rawAccounts.startsWith('[')) {
-          try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }
-        } else if (rawAccounts.startsWith('{')) {
-          accountIds = rawAccounts
-            .slice(1, -1)
-            .split(',')
-            .map((id) => id.replace(/"/g, '').trim())
-            .filter(Boolean)
-        }
-
-        if (accountIds.length > 0) {
-          const allCards: VirtualCard[] = []
-          for (const accountId of accountIds) {
-            try {
-              const { account } = await accountsService.findAccount(user.username, accountId)
-              const accountCards = await cardsService.getCardsByAccountNumber(account.accountNumber.toString())
-              allCards.push(...accountCards)
-            } catch (error) {
-              console.error(`Failed to fetch cards for account ${accountId}:`, error)
-            }
-          }
-          setCards(allCards)
-        }
-      } catch (error) {
-        console.error('Failed to fetch cards:', error)
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchCards = async () => {
+    setIsLoading(true);
+    try {
+      const accountId: string = userProfile.account ?? '';
+      // One request for all cards
+      const allCards = await cardsService.getAllCards(accountId);
+      setCards(allCards);
+    } catch (error) {
+      console.error('Failed to fetch cards:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    fetchCards()
-  }, [userProfile, user])
+  fetchCards();
+}, [userProfile, user]);
 
   const formatCardNumber = (cardNumber: string) => {
     if (!cardNumber) return '•••• •••• •••• ••••'
@@ -93,6 +70,7 @@ export default function Cards() {
     setActiveIndex(Math.min(index, cards.length - 1))
   }
 
+
  const handleShowQR = async () => {
     if (!activeCard) return
 
@@ -118,6 +96,20 @@ export default function Cards() {
       return next
     })
   }
+
+  const scrollToIndex = (index: number) => {
+  if (!scrollRef.current) return
+
+  const container = scrollRef.current
+  const cardWidth = container.offsetWidth * 0.82 + 12
+
+  container.scrollTo({
+    left: index * cardWidth,
+    behavior: 'smooth',
+  })
+
+  setActiveIndex(index)
+}
 
   const cardGradients = [
     'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)',
@@ -192,6 +184,7 @@ export default function Cards() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.08 }}
+                    onClick={() => scrollToIndex(index)}
                     className="relative rounded-3xl p-6 overflow-hidden flex-shrink-0"
                     style={{
                       width: '82%',
@@ -280,11 +273,11 @@ export default function Cards() {
               </div>
             )}
 
-            {/* Card name + last four */}
+           
            
 
             {/* Action buttons */}
-            <div className="flex  gap-8  ml-24 mt-6 mb-6">
+            <div className="flex  justify-center gap-8  mr-10 mt-6 mb-6">
               {/* QR Code */}
               <button
                 onClick={handleShowQR}

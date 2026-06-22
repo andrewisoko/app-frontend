@@ -83,68 +83,56 @@ export default function Home() {
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [hasNotifications] = useState(false) // Set to true when notifications exist
 
 
-  useEffect(() => {
-    if (!userProfile) return
+useEffect(() => {
+  if (!userProfile) return;
 
-    const fetchData = async () => {
-      setIsLoading(true)
-      try {
-        // Parse account IDs from user profile.
-        // Handles both JSON array ["id"] and PostgreSQL set {"id"} formats.
-        const rawAccounts = userProfile.accounts?.trim() ?? ''
-        let accountIds: string[] = []
-        if (rawAccounts.startsWith('[')) {
-          try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }
-        } else if (rawAccounts.startsWith('{')) {
-          accountIds = rawAccounts
-            .slice(1, -1)
-            .split(',')
-            .map((id) => id.replace(/"/g, '').trim())
-            .filter(Boolean)
-        }
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const accountId = userProfile.account ?? '';   // already an array
+      console.log('accounts', accountId);
 
-        if (accountIds.length > 0) {
-          const results = await Promise.all(
-            accountIds.map((id) =>
-              accountsService.findAccount(userProfile.user_name, id)
-            )
-          )
-          const totalBalance = results.reduce(
-            (sum, r) => sum + r.account.available_balance,
-            0
-          )
-          setBalance(totalBalance)
-        }
-
-        // Fetch recipients
+      // Use only the first account for balance
+   
         try {
-          const recipientsData = await recipientsService.getRecipients(userProfile.id?.trim() ?? '')
-          setRecipients(recipientsData.slice(0,5))
+          const result = await accountsService.findAccount(
+            userProfile.user_name,
+            accountId
+          );
+          setBalance(result.account.available_balance);
         } catch (error) {
-          console.error('Failed to fetch recipients:', error)
-  
+          console.error('Failed to fetch account balance', error);
         }
+      
 
-        // Fetch transactions
-        try {
-          const transactionsData = await transactionsService.getTransactions()
-          setTransactions(transactionsData.slice(0, 5))
-        } catch {
-          // Transactions endpoint may not be ready
-        }
+      // Fetch recipients
+      try {
+        const recipientsData = await recipientsService.getRecipients(
+          userProfile.id?.trim() ?? ''
+        );
+        setRecipients(recipientsData.slice(0, 5));
       } catch (error) {
-        console.error('Error fetching data:', error)
-      } finally {
-        setIsLoading(false)
+        console.error('Failed to fetch recipients:', error);
       }
+
+      // Fetch transactions
+      try {
+        const transactionsData = await transactionsService.getTransactions();
+        setTransactions(transactionsData.slice(0, 5));
+      } catch {
+        // Transactions endpoint may not be ready
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    fetchData()
-  }, [userProfile])
-
+  fetchData();
+}, [userProfile]);
 
 
   return (
@@ -153,11 +141,11 @@ export default function Home() {
 
         {/* Header with notification and profile */}
         <div className="flex items-center justify-end gap-4 px-6 pt-4 pb-2">
-          <button className="text-white/70 hover:text-white transition-colors relative">
+          <button 
+            onClick={() => navigate('/app/contracts')}
+            className="text-white/70 hover:text-white transition-colors relative"
+          >
             <Bell size={22} />
-            {hasNotifications && (
-              <div className="absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full"></div>
-            )}
           </button>
           <button 
             onClick={() => navigate('/app/profile')}

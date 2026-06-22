@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 
 
+
 export default function InboxPage() {
   const { user, userProfile } = useAuth()
   const [inbox, setInbox] = useState<Inbox | null>(null)
@@ -76,9 +77,12 @@ export default function InboxPage() {
 
   const handleAccept = async (id: string) => {
     if (!user?.id) return
+    if(!selectedContract) return
     setProcessingId(id)
     try {
-      await contractsService.contractReceivedOnInbox(id, user.id, true)
+      const receiverAccountId:string =  selectedContract.receiver?.[0] ?? ''
+      console.log('rec account accept', receiverAccountId )
+      await contractsService.contractReceivedOnInbox(id, receiverAccountId , true)
       setInbox((prev) => {
         if (!prev) return prev
         return {
@@ -96,9 +100,13 @@ export default function InboxPage() {
 
   const handleDecline = async (id: string) => {
     if (!user?.id) return
+    if(!selectedContract) return
     setProcessingId(id)
     try {
-      await contractsService.contractReceivedOnInbox(id, user.id, false)
+      const receiverAccountId:string =  selectedContract.receiver?.[0] ?? ''
+      console.log('rec account accept', receiverAccountId )
+
+      await contractsService.contractReceivedOnInbox(id, receiverAccountId, false)
       console.log('user id', user.id)
       console.log('constract id', id)
       setInbox((prev) => {
@@ -119,7 +127,6 @@ export default function InboxPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
       case 'accepted':
         return 'text-green-400'
       case 'pending':
@@ -136,9 +143,8 @@ export default function InboxPage() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'active':
       case 'accepted':
-        return 'Active'
+        return 'Accepted'
       case 'pending':
       case 'new':
         return 'Pending'
@@ -429,7 +435,7 @@ export default function InboxPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 mb-20"
             style={{ background: 'rgba(0, 0, 0, 0.8)' }}
             onClick={() => setSelectedContract(null)}
           >
@@ -462,7 +468,7 @@ export default function InboxPage() {
               </div>
 
               {/* Contract Info */}
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4">
                 <div 
                   className="p-4 rounded-2xl"
                   style={{ background: 'rgba(177, 92, 255, 0.1)' }}
@@ -484,7 +490,7 @@ export default function InboxPage() {
                           <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#FCD34D' }}>
                             {selectedContract.contract_status.toLocaleUpperCase() || 'PENDING'}
                           </span>
-                        ): selectedContract.contract_status === 'accpeted' ? (
+                        ): selectedContract.contract_status === 'accepted' ? (
                           <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#4ADE80' }}>
                             {selectedContract.contract_status.toLocaleUpperCase() || 'ACCEPTED'}
                           </span>
@@ -630,7 +636,7 @@ export default function InboxPage() {
 
               {/* Action Buttons */}
               {(!selectedContract.contract_status || selectedContract.contract_status === 'pending' || selectedContract.contract_status === 'new') && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 mt-5">
                   <Button
             
                     className="flex-1 py-3 rounded-xl"

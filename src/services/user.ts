@@ -11,7 +11,7 @@ export interface UserProfile {
   mobile_number: string
   user_name: string
   email: string
-  accounts: string // JSON stringified array of account IDs
+  account: string 
   inbox: string | { id: string } // Can be either ID string or object with id
   recipients: string[]
   created_contract:  Contract[]

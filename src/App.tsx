@@ -17,6 +17,8 @@ import SendMoney from '@/pages/SendMoney'
 import Transfer from '@/pages/Transfer'
 import TopUp from '@/pages/TopUp'
 import NewContract from '@/pages/NewContract'
+import { LandingPage } from './pages/LandingPage'
+import { POSTerminal } from './pages/POSterminal'
 
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -29,7 +31,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/welcome" replace />
+    return <Navigate to="/landing" replace />
   }
   
   return <>{children}</>
@@ -54,13 +56,27 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/welcome" element={
-            <PublicRoute>
-              <Welcome />
-            </PublicRoute>
-          } />
+        <BrowserRouter>
+          <Routes>
+
+            <Route path="/welcome" element={
+              <PublicRoute>
+                <Welcome />
+              </PublicRoute>
+            } />
+             <Route path="/landing" element={
+              <PublicRoute>
+                <LandingPage/>
+              </PublicRoute>
+            } />
+          
+             <Route path="/terminal" element={
+              <PublicRoute>
+                <POSTerminal/>
+              </PublicRoute>
+            } />
+
+            
           
           <Route path="/onboarding" element={
             <PublicRoute>

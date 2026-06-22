@@ -47,9 +47,9 @@ export default function Contracts() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
 
-  const formatAmount = (amount: number | undefined): string => {
-    if (amount === undefined || amount === null) return '$0'
-    return `$${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  const formatAmount = (amount: number | undefined | null): string| null => {
+    if (amount === undefined || amount === null) return null
+    return `£${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   }
 
   const getStatusConfig = (status: string) => {
@@ -59,9 +59,8 @@ export default function Contracts() {
       case 'pending':
       case 'new':
         return { icon: Clock, color: 'bg-yellow-100 text-yellow-700', label: 'Pending' }
-      case 'active':
       case 'accepted':
-        return { icon: CheckCircle, color: 'bg-green-100 text-green-700', label: 'Active' }
+        return { icon: CheckCircle, color: 'bg-green-100 text-green-700', label: 'Accepted' }
       case 'completed':
         return { icon: CheckCircle, color: 'bg-blue-100 text-blue-700', label: 'Completed' }
       case 'cancelled':
@@ -76,17 +75,17 @@ export default function Contracts() {
   }
 
   const getStatusText = (status: string): string => {
+   
     switch (status) {
-      case 'active':
-      case 'accepted': return 'Active'
+      case 'accepted': return 'Accepted'
       case 'pending':
-      case 'new': return 'Pending'
-      case 'declined': return 'Declined'
-      case 'expired': return 'Expired'
-      case 'completed': return 'Completed'
-      case 'cancelled': return 'Cancelled'
-      default: return status
-    }
+        case 'new': return 'Pending'
+        case 'declined': return 'Declined'
+        case 'expired': return 'Expired'
+        case 'completed': return 'Completed'
+        case 'cancelled': return 'Cancelled'
+        default: return status
+      }
   }
 
   // Exactly mirrors the InboxPage parseTimeAgreement + formatting
@@ -116,7 +115,7 @@ export default function Contracts() {
       hour: '2-digit',
       minute: '2-digit',
     })
-
+   
   return (
     <PageTransition>
       <div className="p-6 space-y-6">
@@ -266,7 +265,7 @@ export default function Contracts() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 mb-20"
             style={{ background: 'rgba(0, 0, 0, 0.8)' }}
             onClick={() => setSelectedContract(null)}
           >
@@ -322,14 +321,14 @@ export default function Contracts() {
                             className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
                             style={{ background: 'rgba(234,179,8,0.2)', color: '#FCD34D' }}
                           >
-                            {selectedContract.contract_status.toUpperCase()}
+                            PENDING
                           </span>
-                        ) : selectedContract.contract_status === 'accepted' || selectedContract.contract_status === 'active' ? (
+                        ) : selectedContract.contract_status === 'accepted' ? (
                           <span
                             className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
                             style={{ background: 'rgba(74,222,128,0.2)', color: '#4ADE80' }}
                           >
-                            {selectedContract.contract_status.toUpperCase()}
+                            ACCEPTED
                           </span>
                         ) : selectedContract.contract_status === 'declined' || selectedContract.contract_status === 'cancelled' ? (
                           <span
@@ -343,14 +342,14 @@ export default function Contracts() {
                             className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
                             style={{ background: 'rgba(156,163,175,0.2)', color: '#9CA3AF' }}
                           >
-                            {selectedContract.contract_status.toUpperCase()}
+                            EXPIRED
                           </span>
                         ) : selectedContract.contract_status === 'completed' ? (
                           <span
                             className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
                             style={{ background: 'rgba(96,165,250,0.2)', color: '#60A5FA' }}
                           >
-                            {selectedContract.contract_status.toUpperCase()}
+                            COMPLETED
                           </span>
                         ) : null}
                       </div>
@@ -423,8 +422,9 @@ export default function Contracts() {
                     </div>
                   )}
 
-                  {(selectedContract.sender_amount !== undefined ||
-                    selectedContract.sender_amount === 0) && (
+                  {(
+                     selectedContract.sender_amount !== null 
+                    ) && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Sender Amount</span>
                       <span className="text-white font-medium">

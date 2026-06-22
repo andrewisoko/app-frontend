@@ -35,9 +35,13 @@ export interface CreateTempCardRequest {
 }
 
 export const cardsService = {
-  async getCardsByAccountNumber(accountNumber: string): Promise<VirtualCard[]> {
-    return apiClient.get<VirtualCard[]>(`/virtual-card/account/${accountNumber}`)
+  // async getCardsByAccountId(accountId: string): Promise<VirtualCard[]> {
+  //   return apiClient.get<VirtualCard[]>(`/virtual-card/account/${accountId}`)
+  // },
+    async getAllCards(accountId: string): Promise<VirtualCard[]> {
+    return apiClient.post<VirtualCard[]>(`/virtual-card/bulk`, { accountId });
   },
+
 
   async getVirtualCard(id: string): Promise<VirtualCard> {
     return apiClient.get<VirtualCard>(`/virtual-card/${id}`)

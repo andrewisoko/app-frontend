@@ -68,8 +68,8 @@ export default function Welcome() {
     createRippleEffect(canvas, x, y, () => {
       // Navigate after ripple completes
       setTimeout(() => {
-        navigate('/onboarding')
-      }, 300)
+        navigate('/landing')
+      }, 600)
     })
   }
 
@@ -98,8 +98,8 @@ export default function Welcome() {
       // Create navigation ripple effect
       createRippleEffect(canvas, x, y, () => {
         setTimeout(() => {
-          navigate('/onboarding')
-        }, 300)
+          navigate('/landing')
+        }, 600)
       })
     }
   }

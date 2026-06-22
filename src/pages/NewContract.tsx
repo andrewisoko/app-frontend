@@ -57,16 +57,7 @@ export default function NewContract() {
     fetchRecipients()
   }, [])
 
-  const toggleReceiver = (recipient: Recipient) => {
-    setSelectedReceivers((prev) => {
-      const exists = prev.find((r) => r.id === recipient.id)
-      if (exists) {
-        return prev.filter((r) => r.id !== recipient.id)
-      } else {
-        return [...prev, recipient]
-      }
-    })
-  }
+
 
   const handleSendContract = async () => {
     // Validate required fields
@@ -110,8 +101,8 @@ export default function NewContract() {
         sender: userProfile?.user_name || '',
         receiver: [receiver],
         all_usernames:[userProfile?.user_name || '', receiver],
-        sender_percentage: splitType === 'percentage' ? parseFloat(senderPercentage) || 0 : 0,
-        sender_amount: splitType === 'amount' ? parseFloat(senderAmount) || 0 : 0,
+        sender_percentage: splitType === 'percentage' ? parseFloat(senderPercentage) || null : null,
+        sender_amount: splitType === 'amount' ? parseFloat(senderAmount) || null : null,
         time_agreement: timeAgreement,
         receiver_percentage: receiverPercentages,
         receiver_amount: receiverAmounts,
@@ -199,79 +190,73 @@ export default function NewContract() {
           </div>
 
           {/* Receivers */}
-          <div>
-            <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Receivers</div>
-            
-            {/* Selected receivers display */}
-            {selectedReceivers.length > 0 && (
-              <div className="flex gap-3 mb-4 overflow-x-auto pb-1 scrollbar-none">
-                {selectedReceivers.map((receiver) => {
-                  const initials = receiver.initials || getInitials(receiver.name)
-                  const bgColor = receiver.avatarColor || getAvatarColor(receiver.name)
-                  
-                  return (
-                    <div key={receiver.id} className="flex flex-col items-center gap-2 flex-shrink-0">
-                      <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-base"
-                        style={{ background: bgColor }}
-                      >
-                        {initials}
-                      </div>
-                      <span className="text-white/80 text-xs">{receiver.name.split(' ')[0]}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <div>
+                <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">
+                  Receivers
+                </div>
 
-            {/* Available recipients */}
-            {recipients.length > 0 && (
-              <div className="flex gap-3 mb-4 overflow-x-auto pb-1 scrollbar-none">
-                {recipients.map((recipient) => {
-                  const initials = recipient.initials || getInitials(recipient.name)
-                  const bgColor = recipient.avatarColor || getAvatarColor(recipient.name)
-                  const isSelected = selectedReceivers.some((r) => r.id === recipient.id)
-                  
-                  return (
-                    <motion.button
-                      key={recipient.id}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => toggleReceiver(recipient)}
-                      className={`flex flex-col items-center gap-2 flex-shrink-0 ${isSelected ? 'opacity-50' : ''}`}
-                    >
-                      <div
-                        className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-base transition-all ${
-                          isSelected ? 'ring-4 ring-purple-500' : ''
-                        }`}
-                        style={{ background: bgColor }}
-                      >
-                        {initials}
-                      </div>
-                      <span className="text-white/80 text-xs">{recipient.name.split(' ')[0]}</span>
-                    </motion.button>
-                  )
-                })}
-              </div>
-            )}
+                {/* Available recipients */}
+                {recipients.length > 0 && (
+                  <div className="flex gap-3 mb-4 overflow-x-auto pb-1 scrollbar-none">
+                    {recipients.map((recipient) => {
+                      const initials =
+                        recipient.initials || getInitials(recipient.name)
 
-            {/* Add receiver input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Add receiver by username"
-                value={receiver}
-                onChange={(e) => setReceiver(e.target.value)}
-                className="flex-1 px-5 py-4 rounded-2xl text-white placeholder-white/40 outline-none"
-                style={{ background: 'rgba(255,255,255,0.08)' }}
-              />
-              <button
-                className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
-              >
-                <UserPlus size={20} className="text-white" />
-              </button>
-            </div>
-          </div>
+                      const bgColor =
+                        recipient.avatarColor || getAvatarColor(recipient.name)
+
+                      const isSelected = selectedReceivers.some(
+                        (r) => r.id === recipient.id
+                      )
+
+                      return (
+                        <motion.button
+                          key={recipient.id}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setReceiver(recipient.name)}
+                          className={`flex flex-col items-center gap-2 flex-shrink-0 ${
+                            isSelected ? 'opacity-50' : ''
+                          }`}
+                        >
+                          <div
+                            className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-base transition-all ${
+                              isSelected ? 'ring-4 ring-purple-500' : ''
+                            }`}
+                            style={{ background: bgColor }}
+                          >
+                            {initials}
+                          </div>
+                          <span className="text-white/80 text-xs">
+                            {recipient.name.split(' ')[0]}
+                          </span>
+                        </motion.button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Add receiver input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Add receiver by username"
+                    value={receiver}
+                    onChange={(e) => setReceiver(e.target.value)}
+                    className="flex-1 px-5 py-4 rounded-2xl text-white placeholder-white/40 outline-none"
+                    style={{ background: 'rgba(255,255,255,0.08)' }}
+                  />
+                  <button
+                    type="button"
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)',
+                    }}
+                  >
+                    <UserPlus size={20} className="text-white" />
+                  </button>
+                </div>
+              </div>
 
           {/* Split Agreement */}
           <div>

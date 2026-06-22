@@ -19,8 +19,8 @@ export interface Contract{
     split_agreement: string,
     contract_status: string,
     time_agreement: string[]
-    sender_percentage: number;
-    sender_amount: number;
+    sender_percentage: number | null;
+    sender_amount: number | null;
     receiver_percentage: number[];
     receiver_amount: number[];
     repayment_agreement:string,
@@ -40,8 +40,8 @@ export interface SendContractRequest extends Partial<SignInData> {
   sender: string
   receiver: string[]
   all_usernames:string[]
-  sender_percentage: number
-  sender_amount: number
+  sender_percentage: number | null
+  sender_amount: number | null
   time_agreement: string[]
   receiver_percentage: number[]
   receiver_amount: number[]
@@ -65,10 +65,10 @@ export const contractsService = {
     return apiClient.post<string>('/contract/send-contract', data)
   },
 
-  async contractReceivedOnInbox(contractId: string, receiverIds: string, accepted: boolean): Promise<any> {
+  async contractReceivedOnInbox(contractId: string, receiverAccountIds: string, accepted: boolean): Promise<any> {
     return apiClient.post('/inbox/receiver-inbox-contract', {
       contractId,
-      receiverIds,
+      receiverAccountIds,
       accepted,
     })
   },
