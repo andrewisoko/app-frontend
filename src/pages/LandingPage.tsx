@@ -3,14 +3,11 @@ import { useNavigate } from 'react-router-dom'
 
 
 
-// type Experience = "user" | "terminal";
-
-// interface Props {
-//   onSelect: (e: Experience) => void;
-// }
-
 export function LandingPage() {
+
   const navigate  = useNavigate()
+
+  
   return (
     <div className="min-h-screen w-full bg-[#0c0618] flex flex-col items-center justify-center relative overflow-hidden px-6 py-12">
 

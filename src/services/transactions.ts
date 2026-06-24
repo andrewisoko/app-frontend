@@ -1,4 +1,4 @@
-import { apiClient } from './api'
+import { apiClient } from './apis/api'
 
 export interface Transaction {
   id: string

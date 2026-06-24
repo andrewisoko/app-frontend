@@ -1,4 +1,4 @@
-import { apiClient } from './api'
+import { apiClient } from './apis/api'
 
 export interface VirtualCard {
   id: string
@@ -35,9 +35,9 @@ export interface CreateTempCardRequest {
 }
 
 export const cardsService = {
-  // async getCardsByAccountId(accountId: string): Promise<VirtualCard[]> {
-  //   return apiClient.get<VirtualCard[]>(`/virtual-card/account/${accountId}`)
-  // },
+  async getCardsByAccountId(accountId: string): Promise<VirtualCard[]> {
+    return apiClient.get<VirtualCard[]>(`/virtual-card/account/${accountId}`)
+  },
     async getAllCards(accountId: string): Promise<VirtualCard[]> {
     return apiClient.post<VirtualCard[]>(`/virtual-card/bulk`, { accountId });
   },

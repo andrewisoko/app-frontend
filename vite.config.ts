@@ -24,6 +24,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+          '/payment-api': {
+        target: 'http://localhost:3002/payment-drafts',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/payment-api/, ''),
+      },
     },
   },
+  
 })

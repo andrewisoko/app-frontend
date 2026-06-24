@@ -1,4 +1,4 @@
-import { apiClient } from './api'
+import { apiClient } from './apis/api'
 
 export interface Account {
   _id: string
