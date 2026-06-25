@@ -5,7 +5,7 @@ export type DraftStatus =
   | 'PROCESSING'
   | 'COMPLETED'
   | 'FAILED'
-  | 'EXPIRE'
+  | 'EXPIRED'
 
 export interface PaymentDraft {
 
@@ -32,8 +32,8 @@ export interface AttachCard {
 
 }
 
-export const terminalService = {
-  async createTerminal(data: CreateDraft): Promise<PaymentDraft> {
+export const paymentDraftService = {
+  async createDraft(data: CreateDraft): Promise<PaymentDraft> {
     const response = await paymentDraft.post<PaymentDraft>('/create', data);
     return response.data;
   },

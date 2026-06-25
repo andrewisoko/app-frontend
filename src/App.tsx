@@ -19,6 +19,8 @@ import TopUp from '@/pages/TopUp'
 import NewContract from '@/pages/NewContract'
 import { LandingPage } from './pages/LandingPage'
 import { POSTerminal } from './pages/POSterminal'
+import { TerminalProvider } from './contexts/TerminalContext'
+import { DraftProvider } from './contexts/PaymentDraftContext'
 
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -56,6 +58,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
+      <DraftProvider>
+    <TerminalProvider>
         <BrowserRouter>
           <Routes>
 
@@ -70,6 +74,7 @@ function App() {
               </PublicRoute>
             } />
           
+            
              <Route path="/terminal" element={
               <PublicRoute>
                 <POSTerminal/>
@@ -117,6 +122,8 @@ function App() {
           <Route path="/" element={<Navigate to="/welcome" replace />} />
         </Routes>
       </BrowserRouter>
+    </TerminalProvider>
+    </DraftProvider>
     </AuthProvider>
   )
 }

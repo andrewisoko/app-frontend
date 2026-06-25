@@ -1,13 +1,34 @@
 import { ArrowLeftRight, Smartphone, Monitor, ArrowRight, Zap, Shield, Globe } from "lucide-react";
 import { useNavigate } from 'react-router-dom'
+import { useTerminal } from "../contexts/TerminalContext";
+import { terminalService } from "@/services/terminal";
 
 
 
 export function LandingPage() {
 
+  const { setTerminal } = useTerminal();
   const navigate  = useNavigate()
 
-  
+  const handleTerminalExperience = async () => {
+    try {
+      const terminal =
+        await terminalService.createTerminal();
+
+      console.log("terminal available", terminal);
+
+      setTerminal(terminal);
+
+      console.log("about to navigate");
+
+      navigate("/terminal");
+
+    } catch (error: any) {
+      console.error("FULL ERROR:", error);
+    }
+  };
+
+
   return (
     <div className="min-h-screen w-full bg-[#0c0618] flex flex-col items-center justify-center relative overflow-hidden px-6 py-12">
 
@@ -72,7 +93,7 @@ export function LandingPage() {
 
         {/* Terminal Experience */}
         <button
-          onClick={() => navigate("/terminal")}
+          onClick={handleTerminalExperience}
           className="group relative overflow-hidden rounded-3xl border border-slate-600/20 bg-gradient-to-br from-[#0f1923] via-[#0d1720] to-[#081219] p-6 text-left transition-all duration-300 hover:border-slate-500/40 hover:shadow-xl hover:shadow-slate-900/40 active:scale-[0.98]"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/0 to-teal-600/0 group-hover:from-cyan-600/8 group-hover:to-teal-600/8 transition-all duration-300 rounded-3xl" />

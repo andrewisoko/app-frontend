@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import {
   Wifi,
   Battery,
-  Delete,
   CheckCircle2,
   XCircle,
   RefreshCw,
@@ -12,14 +11,17 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import { paymentDraftService } from "@/services/paymentDrafts";
+import { useTerminal } from "@/contexts/TerminalContext";
+import { Html5Qrcode } from "html5-qrcode";
+import { PaymentDraft } from "@/services/paymentDrafts";
 
 
 
 
 
 const MERCHANT = "TransAct Retail";
-const TID = "TID-4829";
+
 
 type TerminalState = "entry" | "ready" | "scanning" | "processing" | "approved" | "declined";
 
@@ -32,54 +34,255 @@ function pad(n: string) {
 }
 
 export function POSTerminal() {
-  const [state, setState] = useState<TerminalState>("entry");
-  const [raw, setRaw] = useState("");
-  const [scanY, setScanY] = useState(0);
-  const [authCode] = useState(() => Math.random().toString(36).slice(2, 8).toUpperCase());
-  const scanRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const navigate = useNavigate()
+  
+      const [state, setState] = useState<TerminalState>("entry");
 
-  const amount = pad(raw);
-  const hasAmount = parseFloat(amount) > 0;
+      const [raw, setRaw] = useState("");
+      const [scanY, setScanY] = useState(0);
+      const [authCode] = useState(() => Math.random().toString(36).slice(2, 8).toUpperCase());
+      const scanRef = useRef<ReturnType<typeof setInterval> | null>(null);
+      const pollRef = useRef<ReturnType<typeof setInterval> | null>(null); 
+      const qrScannerRef = useRef<Html5Qrcode | null>(null);
+      const [draft, setDraft] = useState<PaymentDraft | null>(null);
+      const { terminal } = useTerminal();
+      const scanHandledRef = useRef(false);
+      const navigate = useNavigate()
+      const amount = pad(raw);
+      const hasAmount = parseFloat(amount) > 0;
+      const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+     
 
-  // scan line animation
-  useEffect(() => {
-    if (state === "scanning") {
-      scanRef.current = setInterval(() => {
-        setScanY((y) => (y >= 100 ? 0 : y + 1.8));
-      }, 18);
-      const timer = setTimeout(() => {
-        clearInterval(scanRef.current!);
-        setState("processing");
-        setTimeout(() => {
-          setState(Math.random() < 0.8 ? "approved" : "declined");
-        }, 2000);
-      }, 3000);
-      return () => {
-        clearInterval(scanRef.current!);
-        clearTimeout(timer);
+      ////////// useEffects ///////////////
+
+      //animation//
+
+      useEffect(() => {
+      if (state === "scanning") {
+        scanRef.current = setInterval(() => {
+          setScanY((y) =>
+            y >= 100 ? 0 : y + 1.8
+            );
+          }, 18);
+
+          return () => {
+            if (scanRef.current) {
+              clearInterval(scanRef.current);
+            }
+          };
+        }
+      }, [state]);
+
+      //start camera//
+
+      useEffect(() => {
+      if (state !== "scanning") {
+        return;
+      }
+
+      const startScanner = async () => {
+      try {
+      qrScannerRef.current =
+        new Html5Qrcode("qr-reader");
+
+      await qrScannerRef.current.start(
+              { facingMode: "environment" },
+              {
+                fps: 10,
+                qrbox: {
+                  width: 220,
+                  height: 220,
+                },
+              },
+              async (decodedText) => {
+
+                if (scanHandledRef.current) {
+                  return;
+                }
+
+                scanHandledRef.current = true;
+
+                await handleQrScanned(
+                  decodedText
+                );
+              },
+              (errorMessage) => {
+                console.debug(errorMessage);
+              }
+            );
+          } catch (error) {
+            console.error(error);
+          }
+        };
+
+        startScanner();
+
+        return () => {
+          if (qrScannerRef.current) {
+            qrScannerRef.current
+              .stop()
+              .then(() => {
+                qrScannerRef.current?.clear();
+              })
+              .catch(console.error);
+          }
+        };
+      }, [state]);
+
+    // end interval //
+
+    useEffect(() => {
+        return () => {
+          if (scanRef.current) {
+            clearInterval(scanRef.current);
+          }
+
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+          }
+        };
+      }, []);
+
+      
+      ////////// handlers ///////////////
+
+      const handleQrScanned = async (
+        scannedValue: string
+       ) => {
+        try {
+          if (!draft?.id) {
+            console.error(
+              "Draft not found"
+            );
+            return;
+          }
+
+          if (scanRef.current) {
+            clearInterval(scanRef.current);
+          }
+
+          setState("processing");
+          if (qrScannerRef.current) {
+            await qrScannerRef.current.stop();
+          }
+          const updatedDraft =
+            await paymentDraftService.attachCard({
+              id: draft.id,
+              cardToken: scannedValue,
+            });
+
+          if (
+            updatedDraft.status === "COMPLETED"
+          ) {
+            setState("approved");
+            return;
+          }
+
+          if (
+            updatedDraft.status === "FAILED" ||
+            updatedDraft.status === "EXPIRED"
+          ) {
+            setState("declined");
+            return;
+          }
+
+          pollDraftStatus(draft.id);
+
+        } catch (error) {
+          console.error(error);
+
+          setState("declined");
+        }
       };
-    }
-  }, [state]);
+        
 
-  const press = (key: string) => {
-    if (state !== "entry" && state !== "ready") return;
-    if (key === "C") { setRaw(""); setState("entry"); return; }
-    if (key === "⌫") { const next = raw.slice(0, -1); setRaw(next); setState(next ? "ready" : "entry"); return; }
-    if (key === "OK") { if (hasAmount) setState("scanning"); return; }
-    if (raw.length >= 8) return;
-    const next = raw + key;
-    setRaw(next);
-    setState("ready");
-  };
+     ////////// additional functions ///////////////
 
-  const reset = () => {
-    setRaw("");
-    setState("entry");
-    setScanY(0);
-  };
 
-  const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const pollDraftStatus = (draftId: string) => {
+    pollRef.current = setInterval(async () => {
+      try {
+        const updatedDraft =
+          await paymentDraftService.getDraft(draftId);
+
+        switch (updatedDraft.status) {
+          case "COMPLETED":
+            if (pollRef.current) {
+              clearInterval(pollRef.current);
+            }
+
+            setState("approved");
+            break;
+
+            case "FAILED":
+            case "EXPIRED":
+          if (pollRef.current) {
+              clearInterval(pollRef.current);
+            }
+
+            setState("declined");
+            break;
+        }
+      } catch (error) {
+        console.error(error);
+
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+        }
+
+        setState("declined");
+        }
+      }, 1000);
+    };
+
+    const createDraft = async () => {
+      try {
+        if (!terminal) {
+          return;
+          }
+        const draft =
+          await paymentDraftService.createDraft({
+            terminalId: terminal.id,
+            amount: parseFloat(amount),
+            currency: "GBP",
+          });
+
+        setDraft(draft);
+
+        scanHandledRef.current = false;
+
+        setState("scanning");
+
+      } catch (error) {
+        console.error(error);
+        setState("declined");
+        }
+      };
+
+      const press = (key: string) => {
+        if (state !== "entry" && state !== "ready") return;
+        if (key === "C") { setRaw(""); setState("entry"); return; }
+        if (key === "⌫") { const next = raw.slice(0, -1); setRaw(next); setState(next ? "ready" : "entry"); return; }
+
+        if (key === "OK") {
+          if (hasAmount) {
+            createDraft();
+          }
+          return;
+        }
+        if (raw.length >= 8) return;
+      const next = raw + key;
+        setRaw(next);
+        setState("ready");
+        };
+
+      const reset = () => {
+        setRaw("");
+        setDraft(null)
+        setState("entry");
+        setScanY(0);
+      };
+
+
 
   return (
     <div className="min-h-screen w-full bg-[#111] flex items-center justify-center ">
@@ -114,7 +317,7 @@ export function POSTerminal() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-white leading-none">{MERCHANT}</p>
-                <p className="text-[8px] text-white/50 mt-px">{TID}</p>
+                <p className="text-[8px] text-white/50 mt-px">{terminal?.id}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-white/70">
@@ -198,28 +401,52 @@ export function POSTerminal() {
 
             {/* Scanning state */}
             {state === "scanning" && (
-              <div className="flex flex-col items-center">
-                <div className="relative bg-black rounded-xl overflow-hidden" style={{ width: "100%", height: 120 }}>
-                  {/* Camera noise overlay */}
-                  <div className="absolute inset-0 opacity-20"
-                    style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.03) 2px,rgba(255,255,255,0.03) 4px)" }} />
-                  {/* Corner markers */}
-                  {[["top-0 left-0","border-t-2 border-l-2"],["top-0 right-0","border-t-2 border-r-2"],["bottom-0 left-0","border-b-2 border-l-2"],["bottom-0 right-0","border-b-2 border-r-2"]].map(([pos, border], i) => (
-                    <div key={i} className={`absolute ${pos} size-5 ${border} m-2 border-green-400`} />
+            <div className="flex flex-col items-center">
+
+              <div
+                className="relative rounded-xl overflow-hidden w-full"
+                style={{
+                  height: 220
+                }}
+              >
+                <div
+                  id="qr-reader"
+                  className="absolute inset-0"
+                />
+
+                {/* Optional overlay */}
+
+                <div className="absolute inset-0 pointer-events-none">
+
+                  {[
+                    ["top-0 left-0","border-t-2 border-l-2"],
+                    ["top-0 right-0","border-t-2 border-r-2"],
+                    ["bottom-0 left-0","border-b-2 border-l-2"],
+                    ["bottom-0 right-0","border-b-2 border-r-2"],
+                  ].map(([pos, border], i) => (
+                    <div
+                      key={i}
+                      className={`absolute ${pos} size-5 ${border} m-2 border-green-400`}
+                    />
                   ))}
-                  {/* Scan line */}
+
                   <div
-                    className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent shadow-[0_0_8px_2px_rgba(74,222,128,0.6)]"
-                    style={{ top: `${scanY}%`, transition: "top 18ms linear" }}
+                    className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent"
+                    style={{
+                      top: `${scanY}%`,
+                      transition: "top 18ms linear",
+                    }}
                   />
-                  {/* Center crosshair */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="size-8 border border-green-400/30 rounded-sm" />
-                  </div>
                 </div>
-                <p className="text-[10px] font-bold text-green-600 mt-2 animate-pulse">Scanning QR code...</p>
+
               </div>
-            )}
+
+              <p className="text-[10px] font-bold text-green-600 mt-2 animate-pulse">
+                Scanning QR code...
+              </p>
+
+              </div>
+             )}
 
             {/* Processing */}
             {state === "processing" && (
@@ -335,4 +562,5 @@ export function POSTerminal() {
       </div>
     </div>
   );
-}
+};
+
