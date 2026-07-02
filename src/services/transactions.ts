@@ -1,31 +1,25 @@
 import { apiClient } from './apis/api'
+import { Contract } from './contracts';
 
 export interface Transaction {
-  id: string
-  type: 'credit' | 'debit'
-  amount: number
-  currency: string
-  description: string
-  status: 'pending' | 'completed' | 'failed'
-  createdAt: string
-  merchantName?: string
-  category?: string
+
+    id:string;
+    merchant:string;
+    status:string;
+    amount:number;
+    timestamp:string
+    currency:string;
+    contract?: Contract;
 }
 
-export interface TransactionFilters {
-  startDate?: string
-  endDate?: string
-  type?: 'credit' | 'debit'
-  minAmount?: number
-  maxAmount?: number
-}
+
 
 export const transactionsService = {
-  async getTransactions(filters?: TransactionFilters): Promise<Transaction[]> {
-    return apiClient.get<Transaction[]>('/transactions', { params: filters })
+  async getTransactions( account_id: string): Promise<any> {
+    return apiClient.get<Transaction[]>(`/transactions/${account_id}`)
   },
 
   async getTransaction(id: string): Promise<Transaction> {
-    return apiClient.get<Transaction>(`/transactions/${id}`)
+    return apiClient.get<Transaction>(`/transactions/transaction${id}`)
   },
 }

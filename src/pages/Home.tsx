@@ -5,6 +5,7 @@ import { accountsService } from '@/services/accounts'
 import { recipientsService, Recipient } from '@/services/recipients'
 import { transactionsService, Transaction } from '@/services/transactions'
 import PageTransition from '@/components/animations/PageTransition'
+import Modal from '@/components/ui/Modal'
 import { 
   Send, 
   FileText, 
@@ -12,35 +13,20 @@ import {
   Plus, 
   TrendingUp, 
   Eye, 
-  Zap, 
-  ArrowUpRight,
-  ShoppingBag,
-  Receipt,
   ChevronRight,
-  DollarSign,
-  CreditCard,
-  Wallet,
-  Home as HomeIcon,
-  Bell
+  Bell,
+  CheckCircle2,
+  XCircle,
+  Clock
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 // Icon mapping for transaction categories
-const getCategoryIcon = (category?: string) => {
+const getCategoryIcon = () => {
   const categoryMap: Record<string, any> = {
-    utilities: Zap,
-    salary: ArrowUpRight,
-    groceries: ShoppingBag,
-    shopping: ShoppingBag,
-    bills: Receipt,
     transfer: ArrowLeftRight,
-    subscription: CreditCard,
-    payment: DollarSign,
-    deposit: Wallet,
-    withdrawal: Wallet,
-    default: HomeIcon,
   }
-  return categoryMap[category?.toLowerCase() || 'default'] || categoryMap.default
+  return categoryMap.transfer
 }
 
 // Generate initials from name
@@ -83,6 +69,8 @@ export default function Home() {
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
 
 useEffect(() => {
@@ -92,8 +80,6 @@ useEffect(() => {
     setIsLoading(true);
     try {
       const accountId = userProfile.account ?? '';   // already an array
-      console.log('accounts', accountId);
-
       // Use only the first account for balance
    
         try {
@@ -119,7 +105,8 @@ useEffect(() => {
 
       // Fetch transactions
       try {
-        const transactionsData = await transactionsService.getTransactions();
+        const transactionsData = await transactionsService.getTransactions(accountId);
+        console.log('data',transactionsData)
         setTransactions(transactionsData.slice(0, 5));
       } catch {
         // Transactions endpoint may not be ready
@@ -298,10 +285,10 @@ useEffect(() => {
               ))
             ) : transactions.length > 0 ? (
               transactions.map((tx, i) => {
-                const isPositive = tx.type === 'credit'
-                const Icon = getCategoryIcon(tx.category)
-                const displayName = tx.merchantName || tx.description || 'Transaction'
-                const formattedDate = formatTransactionDate(tx.createdAt)
+      
+                const Icon = getCategoryIcon()
+                const displayName = tx.merchant ||  'Transaction'
+                const formattedDate = formatTransactionDate(tx.timestamp)
 
                 return (
                   <motion.div
@@ -309,13 +296,17 @@ useEffect(() => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.07 }}
-                    className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.07]"
+                    onClick={() => {
+                      setSelectedTransaction(tx)
+                      setIsModalOpen(true)
+                    }}
+                    className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.07] cursor-pointer hover:border-white/[0.15] transition-all"
                     style={{ background: 'rgba(255,255,255,0.04)' }}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ background: isPositive ? 'rgba(5,150,105,0.25)' : 'rgba(109,40,217,0.3)' }}
+                        style={{ background: 'rgba(109,40,217,0.3)' }}
                       >
                         <Icon size={18} className="text-white" />
                       </div>
@@ -324,8 +315,8 @@ useEffect(() => {
                         <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{formattedDate}</div>
                       </div>
                     </div>
-                    <div className="font-semibold text-sm" style={{ color: isPositive ? '#00F5A0' : '#FFFFFF' }}>
-                      {isPositive ? '+' : '-'}${Math.abs(tx.amount).toFixed(2)}
+                    <div className="font-semibold text-sm" style={{ color: '#FF3B30' }}>
+                      {'-'}£{Math.abs(tx.amount).toFixed(2)}
                     </div>
                   </motion.div>
                 )
@@ -335,6 +326,83 @@ useEffect(() => {
             )}
           </div>
         </div>
+
+        {/* Transaction Details Modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedTransaction(null)
+          }}
+          title="Transaction Details"
+        >
+          {selectedTransaction && (
+            <div className="space-y-5">
+              {/* Status Badge */}
+              <div className="flex justify-center">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{
+                  background: selectedTransaction.status === 'approved' 
+                    ? 'rgba(16, 185, 129, 0.15)' 
+                    : selectedTransaction.status === 'pending'
+                    ? 'rgba(251, 191, 36, 0.15)'
+                    : 'rgba(239, 68, 68, 0.15)'
+                }}>
+                  {selectedTransaction.status === 'approved' && <CheckCircle2 size={16} className="text-green-400" />}
+                  {selectedTransaction.status === 'pending' && <Clock size={16} className="text-yellow-400" />}
+                  {selectedTransaction.status === 'declined' && <XCircle size={16} className="text-red-400" />}
+                  <span className="text-sm font-semibold capitalize" style={{
+                    color: selectedTransaction.status === 'approved' 
+                      ? '#10b981' 
+                      : selectedTransaction.status === 'pending'
+                      ? '#fbbf24'
+                      : '#ef4444'
+                  }}>
+                    {selectedTransaction.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div className="text-center">
+                <p className="text-white/60 text-sm mb-1">Amount</p>
+                <h3 className="text-3xl font-bold text-white">
+                  {selectedTransaction.currency === 'GBP' ? '£' : '$'}{Math.abs(selectedTransaction.amount).toFixed(2)}
+                </h3>
+              </div>
+
+              {/* Details */}
+              <div className="space-y-3 pt-2">
+                <div className="flex justify-between items-center py-3 border-b border-white/10">
+                  <span className="text-white/60 text-sm">Transaction ID</span>
+                  <span className="text-white text-sm font-medium">{selectedTransaction.id}</span>
+                </div>
+
+                <div className="flex justify-between items-center py-3 border-b border-white/10">
+                  <span className="text-white/60 text-sm">Merchant</span>
+                  <span className="text-white text-sm font-medium">{selectedTransaction.merchant}</span>
+                </div>
+
+                <div className="flex justify-between items-center py-3 border-b border-white/10">
+                  <span className="text-white/60 text-sm">Date & Time</span>
+                  <span className="text-white text-sm font-medium">
+                    {new Date(selectedTransaction.timestamp).toLocaleString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-3">
+                  <span className="text-white/60 text-sm">Currency</span>
+                  <span className="text-white text-sm font-medium">{selectedTransaction.currency}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
 
       </div>
     </PageTransition>

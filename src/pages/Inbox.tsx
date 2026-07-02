@@ -54,7 +54,7 @@ export default function InboxPage() {
       try {
         const data = await inboxService.getInbox(fetchId)
         // console.log('✅ Making API call to:', `/api/inbox/${fetchId}`)
-        console.log('✅ Inbox data received:', data)
+        // console.log('✅ Inbox data received:', data)
         // console.log('- mostRecent length:', data?.most_recent.length || 0)
         // console.log('- history length:', data?.history?.length || 0)
         // console.log('contract status' ,selectedContract?.contract_status)
