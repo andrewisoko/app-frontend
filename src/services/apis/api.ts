@@ -33,7 +33,8 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
-        if (error.response?.status === 401) {
+        const isAuthEndpoint = error.config?.url?.includes('/user/login') || error.config?.url?.includes('/user/register')
+        if (error.response?.status === 401 && !isAuthEndpoint) {
           localStorage.removeItem('token')
           window.location.href = '/welcome'
         }

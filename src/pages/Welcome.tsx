@@ -4,14 +4,29 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useWaterRipple } from '../hooks/useWaterRipple'
 
 const welcomeCard = '/src/assets/WelcomeCard.jpg.png'
+const welcomeCardMobile = '/src/assets/WelcomeCard.mobile-version.png'
+
+function isMobileWidth() {
+  const w = window.innerWidth
+  return w >= 300 && w <= 500
+}
 
 export default function Welcome() {
   const [showImage, setShowImage] = useState(false)
   const [showTitle, setShowTitle] = useState(false)
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [cardSrc, setCardSrc] = useState(() => isMobileWidth() ? welcomeCardMobile : welcomeCard)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const handleResize = () => {
+      setCardSrc(isMobileWidth() ? welcomeCardMobile : welcomeCard)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Water ripple effect hook
   const { canvasRef: waterRippleCanvasRef, createRipple } = useWaterRipple({
@@ -202,7 +217,7 @@ export default function Welcome() {
       <AnimatePresence>
         {showImage && (
           <motion.img
-            src={welcomeCard}
+            src={cardSrc}
             alt="Transact Card"
             initial={{ opacity: 0, scale: 1.06 }}
             animate={{ opacity: 1, scale: 1 }}

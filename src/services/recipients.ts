@@ -27,8 +27,8 @@ export const recipientsService = {
     return apiClient.get<Recipient>(`/user/${id}/recipient/${recipientUsername}`)
   },
 
-  async addRecipient(): Promise<Recipient> {
-    return apiClient.post<Recipient>('/user/add-recipient')
+  async addRecipient(userId: string, recipientUsername: string): Promise<Recipient> {
+    return apiClient.post<Recipient>('/user/add-recipient', { user_id: userId, recipient_username: recipientUsername })
   },
 
   async deleteRecipient(id: string): Promise<void> {

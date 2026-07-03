@@ -11,7 +11,8 @@ type ContractType = 'existing-user' | 'new-user' | 'external'
 type SplitType = 'amount' | 'percentage'
 
 // Generate initials from name
-const getInitials = (name: string): string => {
+const getInitials = (name?: string | null): string => {
+  if (!name) return '??'
   const parts = name.trim().split(' ')
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()

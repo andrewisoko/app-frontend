@@ -71,6 +71,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showAddRecipient, setShowAddRecipient] = useState(false)
+  const [newRecipientUsername, setNewRecipientUsername] = useState('')
+  const [addRecipientError, setAddRecipientError] = useState('')
 
 
 useEffect(() => {
@@ -106,7 +109,6 @@ useEffect(() => {
       // Fetch transactions
       try {
         const transactionsData = await transactionsService.getTransactions(accountId);
-        console.log('data',transactionsData)
         setTransactions(transactionsData.slice(0, 5));
       } catch {
         // Transactions endpoint may not be ready
@@ -121,6 +123,27 @@ useEffect(() => {
   fetchData();
 }, [userProfile]);
 
+
+  const handleAddRecipient = () => {
+    const username = newRecipientUsername.trim()
+    if (!username) return
+    const alreadyExists = recipients.some(r => r.name?.toLowerCase() === username.toLowerCase())
+    if (alreadyExists) {
+      setAddRecipientError('Recipient already added.')
+      return
+    }
+    const newRecipient: Recipient = {
+      id: username,
+      name: username,
+      initials: getInitials(username),
+      avatarColor: getAvatarColor(username),
+      createdAt: new Date().toISOString(),
+    }
+    setRecipients(prev => [newRecipient, ...prev].slice(0, 5))
+    setNewRecipientUsername('')
+    setAddRecipientError('')
+    setShowAddRecipient(false)
+  }
 
   return (
     <PageTransition>
@@ -218,9 +241,53 @@ useEffect(() => {
             </button>
           </div>
 
+          {/* Add Recipient Inline Panel */}
+          {showAddRecipient && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-4 rounded-2xl border border-white/10"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
+            >
+              <p className="text-white text-sm font-medium mb-3">Add Recipient</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newRecipientUsername}
+                  onChange={e => { setNewRecipientUsername(e.target.value); setAddRecipientError('') }}
+                  placeholder="Enter username"
+                  className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder-white/40 border border-white/10 outline-none focus:border-purple-500 transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddRecipient()
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleAddRecipient}
+                  disabled={!newRecipientUsername.trim()}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => { setShowAddRecipient(false); setNewRecipientUsername(''); setAddRecipientError('') }}
+                  className="px-3 py-2 rounded-xl text-sm text-white/60 hover:text-white transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                >
+                  Cancel
+                </button>
+              </div>
+              {addRecipientError && <p className="text-red-400 text-xs mt-2">{addRecipientError}</p>}
+            </motion.div>
+          )}
+
           <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-none">
             {/* Add */}
-            <motion.button whileTap={{ scale: 0.95 }} className="flex flex-col items-center gap-2 flex-shrink-0">
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setShowAddRecipient(true); setAddRecipientError('') }} className="flex flex-col items-center gap-2 flex-shrink-0">
               <div className="w-14 h-14 rounded-full flex items-center justify-center border border-white/20" style={{ background: 'rgba(255,255,255,0.08)' }}>
                 <Plus size={22} className="text-white" />
               </div>
