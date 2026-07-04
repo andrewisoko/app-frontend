@@ -25,7 +25,7 @@ export default function TopUp() {
         try {
           // Parse account IDs from user profile.
           // Handles both JSON array ["id"] and PostgreSQL set {"id"} formats.
-          const rawAccounts = userProfile.accounts?.trim() ?? ''
+          const rawAccounts = userProfile.account?.trim() ?? ''
           let accountIds: string[] = []
           if (rawAccounts.startsWith('[')) {
             try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }
@@ -89,9 +89,17 @@ export default function TopUp() {
     setAmount(value.toString())
   }
 
-  const handleTopUp = () => {
-    // TODO: Implement top up logic
-    console.log('Topping up', amount, 'using', selectedMethod)
+  const handleTopUp = async () => {
+   
+    if(! userProfile ) return
+    const amountNumber = Number(amount)
+    try {
+    await accountsService.topUp(userProfile.account,amountNumber) 
+      console.log('Topping up', amountNumber, 'using', selectedMethod)
+      navigate('/app')
+    } catch (error) {
+      console.log('failed to update amount')
+    }
   }
 
   const paymentMethods = [
@@ -130,10 +138,10 @@ export default function TopUp() {
         {/* Amount Display */}
         <div className="text-center mb-2 mt-8">
           <div className="text-5xl font-bold text-white/90 mb-2">
-            ${amount}
+            £{amount}
           </div>
           <div className="text-sm text-white/50">
-            Current balance: ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            Current balance: £{currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
 
@@ -155,7 +163,7 @@ export default function TopUp() {
                   : 'rgba(255,255,255,0.08)'
               }}
             >
-              ${value}
+              £{value}
             </motion.button>
           ))}
         </div>
@@ -256,7 +264,7 @@ export default function TopUp() {
             className="w-full py-5 rounded-3xl text-white font-semibold text-lg disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
           >
-            Top Up ${amount}
+            Top Up £{amount}
           </motion.button>
         </div>
 

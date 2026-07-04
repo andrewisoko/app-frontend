@@ -78,7 +78,7 @@ export default function Home() {
 
 
 
-  const prevContractsLength = useRef<number>(userProfile?.created_contract.length ?? 0)
+  // const prevContractsLength = useRef<number>(userProfile?.created_contract.length ?? 0)
 
 //////// use effects //////////////
   useEffect(() => {
@@ -126,24 +126,24 @@ export default function Home() {
   fetchData();
 }, [userProfile]);
 
-  useEffect(() => {
-    if (!userProfile) return
-    const sentContracts = userProfile.created_contract
-    if (!sentContracts?.length) return
+  // useEffect(() => {
+  //   if (!userProfile) return
+  //   const sentContracts = userProfile.created_contract
+  //   if (!sentContracts?.length) return
 
-    try {
-      const latest = sentContracts[sentContracts.length - 1]
-      if (
-        sentContracts.length !== prevContractsLength.current &&
-        (latest.contract_status === 'accepted' || latest.contract_status === 'declined')
-      ) {
-        setBellNotification(1)
-      }
-      prevContractsLength.current = sentContracts.length
-    } catch (error) {
-      console.log(`bell failed to alert user ${error}`)
-    }
-  }, [userProfile])
+  //   try {
+  //     const latest = sentContracts[sentContracts.length - 1]
+  //     if (
+  //       sentContracts.length !== prevContractsLength.current &&
+  //       (latest.contract_status === 'accepted' || latest.contract_status === 'declined')
+  //     ) {
+  //       setBellNotification(1)
+  //     }
+  //     prevContractsLength.current = sentContracts.length
+  //   } catch (error) {
+  //     console.log(`bell failed to alert user ${error}`)
+  //   }
+  // })
 
   const handleAddRecipient = () => {
     const username = newRecipientUsername.trim()
@@ -409,8 +409,8 @@ export default function Home() {
                         <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{formattedDate}</div>
                       </div>
                     </div>
-                    <div className="font-semibold text-sm" style={{ color: '#FF3B30' }}>
-                      {'-'}£{Math.abs(tx.amount).toFixed(2)}
+                    <div className="font-semibold text-sm" style={{ color: tx.type === 'TOPUP' ? '#00C48C' : '#FF3B30' }}>
+                      {tx.type === 'TOPUP' ? '+' : '-'}£{Math.abs(tx.amount).toFixed(2)}
                     </div>
                   </motion.div>
                 )
@@ -434,23 +434,8 @@ export default function Home() {
             <div className="space-y-5">
               {/* Status Badge */}
               <div className="flex justify-center">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{
-                  background: selectedTransaction.status === 'approved' 
-                    ? 'rgba(16, 185, 129, 0.15)' 
-                    : selectedTransaction.status === 'pending'
-                    ? 'rgba(251, 191, 36, 0.15)'
-                    : 'rgba(239, 68, 68, 0.15)'
-                }}>
-                  {selectedTransaction.status === 'approved' && <CheckCircle2 size={16} className="text-green-400" />}
-                  {selectedTransaction.status === 'pending' && <Clock size={16} className="text-yellow-400" />}
-                  {selectedTransaction.status === 'declined' && <XCircle size={16} className="text-red-400" />}
-                  <span className="text-sm font-semibold capitalize" style={{
-                    color: selectedTransaction.status === 'approved' 
-                      ? '#10b981' 
-                      : selectedTransaction.status === 'pending'
-                      ? '#fbbf24'
-                      : '#ef4444'
-                  }}>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-600">
+                  <span className="text-sm font-semibold capitalize text-white">
                     {selectedTransaction.status}
                   </span>
                 </div>
@@ -466,10 +451,6 @@ export default function Home() {
 
               {/* Details */}
               <div className="space-y-3 pt-2">
-                <div className="flex justify-between items-center py-3 border-b border-white/10">
-                  <span className="text-white/60 text-sm">Transaction ID</span>
-                  <span className="text-white text-sm font-medium">{selectedTransaction.id}</span>
-                </div>
 
                 <div className="flex justify-between items-center py-3 border-b border-white/10">
                   <span className="text-white/60 text-sm">Merchant</span>

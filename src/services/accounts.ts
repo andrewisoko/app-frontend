@@ -32,4 +32,7 @@ export const accountsService = {
       accountId,
     })
   },
+  async topUp( id:string, amount:number ){
+    return apiClient.post('account/top-up',{ id,amount} )
+  }
 }

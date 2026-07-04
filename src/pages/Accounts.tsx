@@ -23,7 +23,7 @@ export default function Accounts() {
     if (!userProfile) return
     try {
       // Handles both JSON array ["id"] and PostgreSQL set {"id"} formats.
-      const rawAccounts = userProfile.accounts?.trim() ?? ''
+      const rawAccounts = userProfile.account?.trim() ?? ''
       let accountIds: string[] = []
       if (rawAccounts.startsWith('[')) {
         try { accountIds = JSON.parse(rawAccounts) } catch { accountIds = [] }

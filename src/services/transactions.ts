@@ -4,6 +4,7 @@ import { Contract } from './contracts';
 export interface Transaction {
 
     id:string;
+    type:string
     merchant:string;
     status:string;
     amount:number;
