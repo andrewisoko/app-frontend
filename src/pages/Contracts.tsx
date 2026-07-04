@@ -10,11 +10,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function Contracts() {
+
   const { userProfile } = useAuth()
   const navigate = useNavigate()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null)
+
+
+
+////////////////// useEffects ////////////////////////////////////////////
+
 
   useEffect(() => {
     fetchUserCreatedContracts()
@@ -32,6 +38,7 @@ export default function Contracts() {
       setIsLoading(false)
     }
   }
+
 
   // ── Helpers ────────────────────────────────────────────────
 

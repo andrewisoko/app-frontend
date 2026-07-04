@@ -15,12 +15,14 @@ export const recipientsService = {
     // Backend returns array of usernames (strings)
     const usernames = await apiClient.get<string[]>(`/user/recipients/${id}`)
     
-    // Convert usernames to Recipient objects
-    return usernames.map(username => ({
-      id: username,
-      name: username,
-      createdAt: new Date().toISOString()
-    }))
+    // Convert usernames to Recipient objects, filtering out nullish entries
+    return usernames
+      .filter((username): username is string => !!username)
+      .map(username => ({
+        id: username,
+        name: username,
+        createdAt: new Date().toISOString()
+      }))
   },
 
   async getRecipient(id: string, recipientUsername: string): Promise<Recipient> {

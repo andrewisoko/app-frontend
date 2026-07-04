@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { accountsService } from '@/services/accounts'
@@ -74,29 +74,32 @@ export default function Home() {
   const [showAddRecipient, setShowAddRecipient] = useState(false)
   const [newRecipientUsername, setNewRecipientUsername] = useState('')
   const [addRecipientError, setAddRecipientError] = useState('')
+  const [ bellNotification,setBellNotification ] = useState(0)
 
 
-useEffect(() => {
-  if (!userProfile) return;
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const accountId = userProfile.account ?? '';   // already an array
-      // Use only the first account for balance
-   
-        try {
-          const result = await accountsService.findAccount(
-            userProfile.user_name,
-            accountId
-          );
-          setBalance(result.account.available_balance);
-        } catch (error) {
-          console.error('Failed to fetch account balance', error);
-        }
-      
+  const prevContractsLength = useRef<number>(userProfile?.created_contract.length ?? 0)
 
-      // Fetch recipients
+//////// use effects //////////////
+  useEffect(() => {
+    if (!userProfile) return;
+
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const accountId = userProfile.account ?? '';   // already an array
+        // Use only the first account for balance
+    
+          try {
+            const result = await accountsService.findAccount(
+              userProfile.user_name,
+              accountId
+            );
+            setBalance(result.account.available_balance);
+          } catch (error) {
+            console.error('Failed to fetch account balance', error);
+          }
+  // Fetch recipients
       try {
         const recipientsData = await recipientsService.getRecipients(
           userProfile.id?.trim() ?? ''
@@ -123,6 +126,24 @@ useEffect(() => {
   fetchData();
 }, [userProfile]);
 
+  useEffect(() => {
+    if (!userProfile) return
+    const sentContracts = userProfile.created_contract
+    if (!sentContracts?.length) return
+
+    try {
+      const latest = sentContracts[sentContracts.length - 1]
+      if (
+        sentContracts.length !== prevContractsLength.current &&
+        (latest.contract_status === 'accepted' || latest.contract_status === 'declined')
+      ) {
+        setBellNotification(1)
+      }
+      prevContractsLength.current = sentContracts.length
+    } catch (error) {
+      console.log(`bell failed to alert user ${error}`)
+    }
+  }, [userProfile])
 
   const handleAddRecipient = () => {
     const username = newRecipientUsername.trim()
@@ -145,6 +166,7 @@ useEffect(() => {
     setShowAddRecipient(false)
   }
 
+
   return (
     <PageTransition>
       <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(180deg, #140021 0%, #1B012B 100%)' }}>
@@ -152,10 +174,15 @@ useEffect(() => {
         {/* Header with notification and profile */}
         <div className="flex items-center justify-end gap-4 px-6 pt-4 pb-2">
           <button 
-            onClick={() => navigate('/app/contracts')}
+            onClick={() => navigate('/app/notificattion')}
             className="text-white/70 hover:text-white transition-colors relative"
           >
             <Bell size={22} />
+            {bellNotification > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {bellNotification}
+              </span>
+            )}
           </button>
           <button 
             onClick={() => navigate('/app/profile')}

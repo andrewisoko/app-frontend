@@ -21,9 +21,9 @@ const getInitials = (name?: string | null): string => {
 }
 
 // Generate a consistent color based on string
-const getAvatarColor = (str: string): string => {
+const getAvatarColor = (str: string | null | undefined): string => {
   const colors = ['#7C3AED', '#2563EB', '#DB2777', '#059669', '#EA580C', '#DC2626', '#9333EA']
-  const hash = str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const hash = (str ?? '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
   return colors[hash % colors.length]
 }
 
@@ -228,7 +228,7 @@ export default function NewContract() {
                             {initials}
                           </div>
                           <span className="text-white/80 text-xs">
-                            {recipient.name.split(' ')[0]}
+                            {(recipient.name ?? '').split(' ')[0]}
                           </span>
                         </motion.button>
                       )

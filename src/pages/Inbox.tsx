@@ -104,11 +104,11 @@ export default function InboxPage() {
     setProcessingId(id)
     try {
       const receiverAccountId:string =  selectedContract.receiver?.[0] ?? ''
-      console.log('rec account accept', receiverAccountId )
+      // console.log('rec account accept', receiverAccountId )
 
       await contractsService.contractReceivedOnInbox(id, receiverAccountId, false)
-      console.log('user id', user.id)
-      console.log('constract id', id)
+      // console.log('user id', user.id)
+      // console.log('constract id', id)
       setInbox((prev) => {
         if (!prev) return prev
         return {
