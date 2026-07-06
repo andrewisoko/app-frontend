@@ -7,7 +7,7 @@ import { ArrowLeft, Send, UserPlus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { contractsService } from '@/services/contracts'
 
-type ContractType = 'existing-user' | 'new-user' | 'external'
+type ReceiverType = 'existing-user' | 'new-user' 
 type SplitType = 'amount' | 'percentage'
 
 // Generate initials from name
@@ -30,7 +30,7 @@ const getAvatarColor = (str: string | null | undefined): string => {
 export default function NewContract() {
   const navigate = useNavigate()
   const { user, userProfile } = useAuth()
-  const [contractType, setContractType] = useState<ContractType>('existing-user')
+  const [receiverType, setReceiverType] = useState<ReceiverType>('existing-user')
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [selectedReceivers, setSelectedReceivers] = useState<Recipient[]>([])
   const [splitType, setSplitType] = useState<SplitType>('percentage')
@@ -38,10 +38,11 @@ export default function NewContract() {
   const [receiverPercentage, setReceiverPercentage] = useState('50')
   const [senderAmount, setSenderAmount] = useState('')
   const [receiverAmount, setReceiverAmount] = useState('')
-  const [receiver, setReceiver] = useState('')
+  const [receiver, setReceiver] = useState<string>('')
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [QrCodeContract, setQrCodeContract ] = useState('')
 
   useEffect(() => {
     const fetchRecipients = async () => {
@@ -59,6 +60,9 @@ export default function NewContract() {
   }, [])
 
 
+  const handleNewUserButton = () => {
+    
+  }
 
   const handleSendContract = async () => {
     // Validate required fields
@@ -98,7 +102,9 @@ export default function NewContract() {
         splitType === 'amount' ? parseFloat(receiverAmount) || [] : []
       )
 
+      console.log('tpe', receiverType)
       const requestData = {
+        receiver_type: receiverType,
         sender: userProfile?.user_name || '',
         receiver: [receiver],
         all_usernames:[userProfile?.user_name || '', receiver],
@@ -150,16 +156,16 @@ export default function NewContract() {
             <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Contract Type</div>
             <div className="flex gap-3">
               {[
-                { value: 'existing-user' as ContractType, label: 'Existing User' },
-                { value: 'new-user' as ContractType, label: 'New User' },
+                { value: 'existing-user' as ReceiverType, label: 'Existing User' },
+                { value: 'one-time' as ReceiverType, label: 'New User' },
                 
               ].map((type) => (
                 <motion.button
                   key={type.value}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setContractType(type.value)}
+                  onClick={() => setReceiverType(type.value)}
                   className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-all border-2 ${
-                    contractType === type.value
+                    receiverType === type.value
                       ? 'border-purple-500 bg-purple-500/20 text-white'
                       : 'border-white/20 bg-white/5 text-white/70'
                   }`}
@@ -191,6 +197,7 @@ export default function NewContract() {
           </div>
 
           {/* Receivers */}
+         
             <div>
                 <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">
                   Receivers
@@ -258,7 +265,6 @@ export default function NewContract() {
                   </button>
                 </div>
               </div>
-
           {/* Split Agreement */}
           <div>
             <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Split Agreement</div>

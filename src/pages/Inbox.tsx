@@ -3,10 +3,10 @@ import { Inbox, inboxService } from '@/services/inbox'
 import { Contract, contractsService } from '@/services/contracts'
 import { useAuth } from '@/hooks/useAuth'
 // import { userService } from '@/services/user'
-import Button from '@/components/ui/Button'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import PageTransition from '@/components/animations/PageTransition'
-import { Check, X, FileText } from 'lucide-react'
+import { X, FileText } from 'lucide-react'
+import ContractDetail from '@/components/contracts/ContractDetail'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 
@@ -467,208 +467,13 @@ export default function InboxPage() {
                 </button>
               </div>
 
-              {/* Contract Info */}
-              <div className="space-y-4">
-                <div 
-                  className="p-4 rounded-2xl"
-                  style={{ background: 'rgba(177, 92, 255, 0.1)' }}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ background: 'rgba(177, 92, 255, 0.3)' }}
-                    >
-                      <FileText className="text-primary-400" size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
-                        {selectedContract.all_usernames?.[0] || 'Unknown Sender'}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {
-                          selectedContract.contract_status === 'pending' ? (
-                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#FCD34D' }}>
-                            {selectedContract.contract_status.toLocaleUpperCase() || 'PENDING'}
-                          </span>
-                        ): selectedContract.contract_status === 'accepted' ? (
-                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#4ADE80' }}>
-                            {selectedContract.contract_status.toLocaleUpperCase() || 'ACCEPTED'}
-                          </span>
-                        ): selectedContract.contract_status === 'declined' ? (
-                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#F87171' }}>
-                            {selectedContract.contract_status.toLocaleUpperCase() || 'DECLINED'}
-                          </span>
-                        ): selectedContract.contract_status === 'expired' ? (
-                          <span className="mt-2 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: 'rgba(234,179,8,0.2)', color: '#9CA3AF' }}>
-                            {selectedContract.contract_status.toLocaleUpperCase() || 'EXPIRED'}
-                          </span>
-                          ): null
-                        }
-                      </div>
-                    </div>
-                  </div>
+              <ContractDetail
+                contract={selectedContract}
+                onAccept={(id) => { handleAccept(id); setSelectedContract(null) }}
+                onDecline={(id) => { handleDecline(id); setSelectedContract(null) }}
+                processingId={processingId}
+              />
 
-                </div>
-
-                {/* Full Contract Details */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Sender</span>
-                    <span className="text-white font-medium">{selectedContract.all_usernames?.[0] || 'Unknown Sender'}</span>
-                  </div>
-                  {selectedContract.receiver && selectedContract.receiver.length > 0 && (
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Receivers</span>
-                      <span className="text-white font-medium">{selectedContract.all_usernames?.slice(1).join(' • ')}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Status</span>
-                    <span className="text-white font-medium">{getStatusText( selectedContract.contract_status || 'Pending')}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Split Agreement</span>
-                    <span className="text-white font-medium">{selectedContract.split_agreement || 'N/A'}</span>
-                  </div>
-                
-                {selectedContract.time_agreement && (
-                <div className="flex justify-between items-center" >
-                  <span className="text-gray-400">Time Agreement</span>
-
-                  {(() => {
-                    const raw = selectedContract.time_agreement as unknown as string
-                    const dates = raw
-                      .replace(/^\{|\}$/g, '') 
-                      .split(',')
-                      .map(date => date.replace(/"/g, '').trim())
-
-                    return (
-                      <div className="flex flex-col gap-1">
-                        <div className="flex gap-2">
-                          <span className="text-gray-400 text-sm w-10">
-                            Start:
-                          </span>
-                          <span className="text-white font-medium text-sm">
-                            {new Date(dates[0]).toLocaleString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <span className="text-gray-400 text-sm w-10">
-                            End:
-                          </span>
-                          <span className="text-white font-medium text-sm">
-                            {new Date(dates[1]).toLocaleString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })()}
-                </div>
-              )}
-                  {selectedContract.sender_percentage !== undefined &&(
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Sender Percentage</span>
-                      <span className="text-white font-medium">{selectedContract.sender_percentage}%</span>
-                    </div>
-                  )}
-                  {selectedContract.sender_amount !== undefined || selectedContract.sender_amount === 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Sender Amount</span>
-                      <span className="text-white font-medium">{formatAmount(selectedContract.sender_amount)}</span>
-                    </div>
-                  )}
-                  {selectedContract.receiver_percentage && selectedContract.receiver_percentage.length > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Receiver Percentages</span>
-                      <span className="text-white font-medium">{selectedContract.receiver_percentage.join(', ')}%</span>
-                    </div>
-                  )}
-                  {selectedContract.receiver_amount && selectedContract.receiver_amount.length > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Receiver Amounts</span>
-                      <span className="text-white font-medium">
-                        {selectedContract.receiver_amount.map(amt => formatAmount(amt)).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {selectedContract.repayment_agreement && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Repayment</span>
-                      <span className="text-white font-medium">{selectedContract.repayment_agreement}</span>
-                    </div>
-                  )}
-                  {selectedContract.event_agreement && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Event</span>
-                      <span className="text-white font-medium">{selectedContract.event_agreement}</span>
-                    </div>
-                  )}
-                  {selectedContract.location_agreement && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Location</span>
-                      <span className="text-white font-medium">{selectedContract.location_agreement}</span>
-                    </div>
-                  )}
-                  {selectedContract.updatedAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Last Updated</span>
-                      <span className="text-white font-medium">{formatDate(selectedContract.updatedAt)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              {(!selectedContract.contract_status || selectedContract.contract_status === 'pending' || selectedContract.contract_status === 'new') && (
-                <div className="flex gap-3 mt-5">
-                  <Button
-            
-                    className="flex-1 py-3 rounded-xl"
-                     style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'}}
-                    onClick={() => {
-                      if (selectedContract.id) {
-                        handleDecline(selectedContract.id)
-                        setSelectedContract(null)
-                      }
-                    }}
-                    disabled={processingId === selectedContract.id}
-                  >
-                    <X size={20} />
-                    Decline
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="flex-1 py-3 rounded-xl"
-                    style={{ background: 'linear-gradient(135deg, #B15CFF 0%, #8B3FD9 100%)' }}
-                    onClick={() => {
-                      if (selectedContract.id) {
-                        handleAccept(selectedContract.id)
-                        setSelectedContract(null)
-                      }
-                    }}
-                    isLoading={processingId === selectedContract.id}
-                  >
-                    <Check size={20} />
-                    Accept
-                  </Button>
-                </div>
-              )}
             </motion.div>
           </motion.div>
         )}

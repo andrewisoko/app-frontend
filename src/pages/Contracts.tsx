@@ -8,6 +8,7 @@ import PageTransition from '@/components/animations/PageTransition'
 import { FileText, Plus, CheckCircle, Clock, XCircle, MapPin, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
+import ContractDetail from '@/components/contracts/ContractDetail'
 
 export default function Contracts() {
 
@@ -54,11 +55,6 @@ export default function Contracts() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
 
-  const formatAmount = (amount: number | undefined | null): string| null => {
-    if (amount === undefined || amount === null) return null
-    return `£${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-  }
-
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'draft':
@@ -81,48 +77,6 @@ export default function Contracts() {
     }
   }
 
-  const getStatusText = (status: string): string => {
-   
-    switch (status) {
-      case 'accepted': return 'Accepted'
-      case 'pending':
-        case 'new': return 'Pending'
-        case 'declined': return 'Declined'
-        case 'expired': return 'Expired'
-        case 'completed': return 'Completed'
-        case 'cancelled': return 'Cancelled'
-        default: return status
-      }
-  }
-
-  // Exactly mirrors the InboxPage parseTimeAgreement + formatting
-  const parseTimeAgreementDates = (raw: string | string[]): { start: string; end: string } | null => {
-    try {
-      let dates: string[] = []
-      if (Array.isArray(raw)) {
-        dates = raw
-      } else {
-        dates = (raw as string)
-          .replace(/^\{|\}$/g, '')
-          .split(',')
-          .map((d) => d.replace(/"/g, '').trim())
-      }
-      if (dates.length < 2) return null
-      return { start: dates[0], end: dates[1] }
-    } catch {
-      return null
-    }
-  }
-
-  const fmtDateTime = (d: string) =>
-    new Date(d).toLocaleString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-   
   return (
     <PageTransition>
       <div className="p-6 space-y-6">
@@ -305,198 +259,7 @@ export default function Contracts() {
                 </button>
               </div>
 
-              {/* Contract Info — hero + status badge */}
-              <div className="space-y-4 mb-6">
-                <div
-                  className="p-4 rounded-2xl"
-                  style={{ background: 'rgba(177, 92, 255, 0.1)' }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(177, 92, 255, 0.3)' }}
-                    >
-                      <FileText className="text-primary-400" size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
-                        {selectedContract.all_usernames?.[0] || 'Unknown Sender'}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {selectedContract.contract_status === 'pending' || selectedContract.contract_status === 'new' ? (
-                          <span
-                            className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
-                            style={{ background: 'rgba(234,179,8,0.2)', color: '#FCD34D' }}
-                          >
-                            PENDING
-                          </span>
-                        ) : selectedContract.contract_status === 'accepted' ? (
-                          <span
-                            className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
-                            style={{ background: 'rgba(74,222,128,0.2)', color: '#4ADE80' }}
-                          >
-                            ACCEPTED
-                          </span>
-                        ) : selectedContract.contract_status === 'declined' || selectedContract.contract_status === 'cancelled' ? (
-                          <span
-                            className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
-                            style={{ background: 'rgba(248,113,113,0.2)', color: '#F87171' }}
-                          >
-                            {selectedContract.contract_status.toUpperCase()}
-                          </span>
-                        ) : selectedContract.contract_status === 'expired' ? (
-                          <span
-                            className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
-                            style={{ background: 'rgba(156,163,175,0.2)', color: '#9CA3AF' }}
-                          >
-                            EXPIRED
-                          </span>
-                        ) : selectedContract.contract_status === 'completed' ? (
-                          <span
-                            className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
-                            style={{ background: 'rgba(96,165,250,0.2)', color: '#60A5FA' }}
-                          >
-                            COMPLETED
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Detail rows */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Sender</span>
-                    <span className="text-white font-medium">
-                      {selectedContract.all_usernames?.[0] || 'Unknown Sender'}
-                    </span>
-                  </div>
-
-                  {selectedContract.receiver && selectedContract.receiver.length > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Receivers</span>
-                      <span className="text-white font-medium">
-                        {selectedContract.all_usernames?.slice(1).join(' • ')}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Status</span>
-                    <span className="text-white font-medium">
-                      {getStatusText(selectedContract.contract_status || 'Pending')}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Split Agreement</span>
-                    <span className="text-white font-medium">
-                      {selectedContract.split_agreement || 'N/A'}
-                    </span>
-                  </div>
-
-                  {selectedContract.time_agreement && (() => {
-                    const parsed = parseTimeAgreementDates(selectedContract.time_agreement)
-                    if (!parsed) return null
-                    return (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Time Agreement</span>
-                        <div className="flex flex-col gap-1 text-right">
-                          <div className="flex gap-2 justify-end">
-                            <span className="text-gray-400 text-sm w-10">Start:</span>
-                            <span className="text-white font-medium text-sm">
-                              {fmtDateTime(parsed.start)}
-                            </span>
-                          </div>
-                          <div className="flex gap-2 justify-end">
-                            <span className="text-gray-400 text-sm w-10">End:</span>
-                            <span className="text-white font-medium text-sm">
-                              {fmtDateTime(parsed.end)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })()}
-
-                  {selectedContract.sender_percentage !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Sender Percentage</span>
-                      <span className="text-white font-medium">
-                        {selectedContract.sender_percentage}%
-                      </span>
-                    </div>
-                  )}
-
-                  {(
-                     selectedContract.sender_amount !== null 
-                    ) && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Sender Amount</span>
-                      <span className="text-white font-medium">
-                        {formatAmount(selectedContract.sender_amount)}
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedContract.receiver_percentage &&
-                    selectedContract.receiver_percentage.length > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Receiver Percentages</span>
-                        <span className="text-white font-medium">
-                          {selectedContract.receiver_percentage.join(', ')}%
-                        </span>
-                      </div>
-                    )}
-
-                  {selectedContract.receiver_amount &&
-                    selectedContract.receiver_amount.length > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Receiver Amounts</span>
-                        <span className="text-white font-medium">
-                          {selectedContract.receiver_amount.map((a) => formatAmount(a)).join(', ')}
-                        </span>
-                      </div>
-                    )}
-
-                  {selectedContract.repayment_agreement && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Repayment</span>
-                      <span className="text-white font-medium">
-                        {selectedContract.repayment_agreement}
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedContract.event_agreement && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Event</span>
-                      <span className="text-white font-medium">
-                        {selectedContract.event_agreement}
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedContract.location_agreement && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Location</span>
-                      <span className="text-white font-medium">
-                        {selectedContract.location_agreement}
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedContract.updatedAt && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Last Updated</span>
-                      <span className="text-white font-medium">
-                        {formatDate(selectedContract.updatedAt)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ContractDetail contract={selectedContract} />
             </motion.div>
           </motion.div>
         )}

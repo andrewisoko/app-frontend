@@ -37,6 +37,7 @@ export interface CreateContractRequest {
 }
 
 export interface SendContractRequest extends Partial<SignInData> {
+  receiver_type: string,
   sender: string
   receiver: string[]
   all_usernames:string[]
