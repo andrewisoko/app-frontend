@@ -103,6 +103,7 @@ export default function InboxPage() {
     if(!selectedContract) return
     setProcessingId(id)
     try {
+      /// for each receiver of the receiver array
       const receiverAccountId:string =  selectedContract.receiver?.[0] ?? ''
       // console.log('rec account accept', receiverAccountId )
 

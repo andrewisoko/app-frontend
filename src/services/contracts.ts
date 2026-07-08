@@ -13,6 +13,8 @@ export interface SignInData{
 export interface Contract{
     id?: string
     updatedAt?: string,
+    participants: number,
+    contract_type:string,
     sender: string,
     receiver: string[],
     all_usernames:string[],
@@ -37,7 +39,8 @@ export interface CreateContractRequest {
 }
 
 export interface SendContractRequest extends Partial<SignInData> {
-  receiver_type: string,
+  participants: number,
+  contract_type: string,
   sender: string
   receiver: string[]
   all_usernames:string[]

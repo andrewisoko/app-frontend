@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { recipientsService, Recipient } from '@/services/recipients'
 import PageTransition from '@/components/animations/PageTransition'
-import { ArrowLeft, Send, UserPlus } from 'lucide-react'
+import { ArrowLeft, Send, UserPlus, QrCode } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { contractsService } from '@/services/contracts'
 
-type ReceiverType = 'existing-user' | 'new-user' 
+type ContractType = 'existing-users' | 'with-new-users' 
 type SplitType = 'amount' | 'percentage'
 
 // Generate initials from name
@@ -30,19 +30,25 @@ const getAvatarColor = (str: string | null | undefined): string => {
 export default function NewContract() {
   const navigate = useNavigate()
   const { user, userProfile } = useAuth()
-  const [receiverType, setReceiverType] = useState<ReceiverType>('existing-user')
+  const [contractType, setContractType] = useState<ContractType>('existing-users')
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [selectedReceivers, setSelectedReceivers] = useState<Recipient[]>([])
   const [splitType, setSplitType] = useState<SplitType>('percentage')
   const [senderPercentage, setSenderPercentage] = useState('50')
-  const [receiverPercentage, setReceiverPercentage] = useState('50')
   const [senderAmount, setSenderAmount] = useState('')
-  const [receiverAmount, setReceiverAmount] = useState('')
-  const [receiver, setReceiver] = useState<string>('')
+  const [receiverPercentages, setReceiverPercentages] = useState<number[]>([]);
+  const [receiverAmounts, setReceiverAmounts] =useState<number[]>([]);
+  const [receiverInput, setReceiverInput] = useState<string>('')
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [QrCodeContract, setQrCodeContract ] = useState('')
+  const [ newUserCount,setNewUserCount ] = useState(0)
+  const [participants,setParticipants ] = useState(0)
+
+  
+  const userName = userProfile?.user_name || user?.username || 'User'
+  const userInitials = getInitials(userName)
+  
 
   useEffect(() => {
     const fetchRecipients = async () => {
@@ -59,14 +65,17 @@ export default function NewContract() {
     fetchRecipients()
   }, [])
 
+  ///////////////////////////////
+  ///////////////////////////////
+  //////// /handlers ////////////
+  ///////////////////////////////
+  ///////////////////////////////
 
-  const handleNewUserButton = () => {
-    
-  }
 
   const handleSendContract = async () => {
+    if (!userProfile) return
     // Validate required fields
-    if (selectedReceivers.length === 0 && !receiver.trim()) {
+    if (selectedReceivers.length === 0 && !receiverInput.trim()) {
       console.error('Please select or add at least one receiver')
       alert('Please select or add at least one receiver')
       return
@@ -85,34 +94,34 @@ export default function NewContract() {
       const timeAgreement: string[] = [
         new Date(startDateTime).toISOString(),
         new Date(endDateTime).toISOString()
-      ]
+      ]    
 
-      // Extract receiver IDs - include selected receivers and manual input
-      const receiverArray = [
-        ...selectedReceivers.map((r) => r),
-        ...(receiver.trim() ? [receiver.trim()] : [])
-      ]
-
-      // Build receiver percentages/amounts arrays for all receivers
-      const totalReceivers = receiverArray.length
-      const receiverPercentages = Array(totalReceivers).fill(
-        splitType === 'percentage' ? parseFloat(receiverPercentage) || [] : []
-      )
-      const receiverAmounts = Array(totalReceivers).fill(
-        splitType === 'amount' ? parseFloat(receiverAmount) || [] : []
-      )
-
-      console.log('tpe', receiverType)
       const requestData = {
-        receiver_type: receiverType,
+        participants:participants,
+        contract_type: contractType,
         sender: userProfile?.user_name || '',
-        receiver: [receiver],
-        all_usernames:[userProfile?.user_name || '', receiver],
-        sender_percentage: splitType === 'percentage' ? parseFloat(senderPercentage) || null : null,
-        sender_amount: splitType === 'amount' ? parseFloat(senderAmount) || null : null,
+        receiver: selectedReceivers.map(r => r.name),
+        all_usernames: [
+        userProfile?.user_name,...selectedReceivers.map(r => r.name)],
+
+        sender_percentage:splitType === "percentage"
+            ? Number(senderPercentage)
+            : null,
+        sender_amount: splitType === "amount"
+            ? Number(senderAmount)
+            : null,
+            
+        receiver_percentage:
+            splitType === "percentage"
+            ? receiverPercentages
+            : [],
+            
+        receiver_amount:
+          splitType === "amount"
+          ? receiverAmounts
+          : [],
+        
         time_agreement: timeAgreement,
-        receiver_percentage: receiverPercentages,
-        receiver_amount: receiverAmounts,
         split_agreement: splitType,
       }
 
@@ -130,8 +139,62 @@ export default function NewContract() {
     }
   }
 
-  const userName = userProfile?.user_name || user?.username || 'User'
-  const userInitials = getInitials(userName)
+
+
+  ///////////////////////////////
+  ///////////////////////////////
+  //////// Other functions //////
+  ///////////////////////////////
+  ///////////////////////////////
+
+  const addReceiver = (recipient: Recipient) => {
+    const exists = selectedReceivers.some(r => r.id === recipient.id);
+
+    if (exists) {
+        setSelectedReceivers(prev =>
+            prev.filter(r => r.id !== recipient.id)
+        );
+        return;
+    }
+
+    setSelectedReceivers(prev => [...prev, recipient]);
+};
+
+const removeReceiver = (index: number) => {
+    setSelectedReceivers(prev =>
+        prev.filter((_, i) => i !== index)
+    );
+
+    setReceiverAmounts(prev =>
+        prev.filter((_, i) => i !== index)
+    );
+
+    setReceiverPercentages(prev =>
+        prev.filter((_, i) => i !== index)
+    );
+};
+
+const addManualReceiver = () => {
+    const username = receiverInput.trim();
+
+    if (!username) return;
+
+    const exists = selectedReceivers.some(
+        r => r.name.toLowerCase() === username.toLowerCase()
+    );
+
+    if (exists) return;
+
+    setSelectedReceivers(prev => [
+        ...prev,
+        {
+            id: crypto.randomUUID(),
+            name: username
+        } as Recipient
+    ]);
+
+    setReceiverInput('');
+};
 
   return (
     <PageTransition>
@@ -151,28 +214,18 @@ export default function NewContract() {
         </div>
 
         <div className="px-6 space-y-6">
-          {/* Contract Type */}
+      
+          {/* Participants */}
           <div>
-            <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Contract Type</div>
-            <div className="flex gap-3">
-              {[
-                { value: 'existing-user' as ReceiverType, label: 'Existing User' },
-                { value: 'one-time' as ReceiverType, label: 'New User' },
-                
-              ].map((type) => (
-                <motion.button
-                  key={type.value}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setReceiverType(type.value)}
-                  className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-all border-2 ${
-                    receiverType === type.value
-                      ? 'border-purple-500 bg-purple-500/20 text-white'
-                      : 'border-white/20 bg-white/5 text-white/70'
-                  }`}
-                >
-                  {type.label}
-                </motion.button>
-              ))}
+            <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Number of Participants</div>
+            <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <input
+                placeholder="Enter number of participants"
+                value={participants || ''}
+                onChange={(e) => setParticipants(Number(e.target.value))}
+                min="0"
+                className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
+              />
             </div>
           </div>
 
@@ -221,7 +274,7 @@ export default function NewContract() {
                         <motion.button
                           key={recipient.id}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => setReceiver(recipient.name)}
+                          onClick={() => addReceiver(recipient)}
                           className={`flex flex-col items-center gap-2 flex-shrink-0 ${
                             isSelected ? 'opacity-50' : ''
                           }`}
@@ -248,8 +301,14 @@ export default function NewContract() {
                   <input
                     type="text"
                     placeholder="Add receiver by username"
-                    value={receiver}
-                    onChange={(e) => setReceiver(e.target.value)}
+                    value={receiverInput}
+                    onChange={(e) => setReceiverInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                          e.preventDefault();
+                          addManualReceiver();
+                      }
+                    }}
                     className="flex-1 px-5 py-4 rounded-2xl text-white placeholder-white/40 outline-none"
                     style={{ background: 'rgba(255,255,255,0.08)' }}
                   />
@@ -260,11 +319,48 @@ export default function NewContract() {
                       background:
                         'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)',
                     }}
+                    onClick={addManualReceiver}
                   >
                     <UserPlus size={20} className="text-white" />
                   </button>
                 </div>
+                
+                {/* New User Button */}
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setNewUserCount(prev => prev + 1)}
+                  className="w-full mt-3 px-5 py-4 rounded-2xl text-white font-medium flex items-center justify-center gap-2"
+                  style={{ background: 'rgba(91,77,255,0.2)', border: '1px solid rgba(91,77,255,0.4)' }}
+                >
+                  <UserPlus size={18} />
+                  New User
+                </motion.button>
               </div>
+          { /* chips */}
+          {selectedReceivers.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+                {selectedReceivers.map((receiver, index) => (
+                    <div
+                        key={receiver.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-full"
+                        style={{
+                            background: "rgba(138,0,255,.15)",
+                            border: "1px solid rgba(138,0,255,.4)"
+                        }}
+                    >
+                        <span className="text-white text-sm">
+                            {receiver.name}
+                        </span>
+
+                        <button
+                           onClick={() => removeReceiver(index)}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                ))}
+            </div>
+           )}
           {/* Split Agreement */}
           <div>
             <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Split Agreement</div>
@@ -307,15 +403,41 @@ export default function NewContract() {
             </div>
             <div>
               <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Receiver Amount</div>
-              <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div className="gap-3 px-5 py-4 rounded-2xl" style={{ background: selectedReceivers.length === 0 ?
+                 'rgba(255,255,255,0.08)' : 'transparent' }}>
+              { selectedReceivers.length === 0 &&(
                 <span className="text-white/60 text-lg">£</span>
-                <input
-                  type="text"
-                  placeholder="Enter amount"
-                  value={ receiverAmount}
-                  onChange={(e) => setReceiverAmount(e.target.value.replace(/[^0-9.]/g, ''))}
-                  className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
-                />
+              )}
+            {selectedReceivers.map((receiver, index) => (
+              <div key={receiver.id} className="mb-3">
+
+                  <div className="ml-4 text-xs text-white/60 mb-2">
+                      {receiver.name} Amount
+                  </div>
+
+                  <div
+                      className="flex items-center gap-3 px-5 py-4 rounded-2xl"
+                      style={{ background: 'rgba(255,255,255,0.08)' }}
+                  >
+                      <span className="text-white/60 text-lg">£</span>
+
+                      <input
+                          type="text"
+                          value={receiverAmounts[index] ?? ''}
+                          onChange={(e) => {
+                              const updated = [...receiverAmounts];
+                              updated[index] = Number(
+                                  e.target.value.replace(/[^0-9.]/g, '')
+                              );
+
+                              setReceiverAmounts(updated);
+                          }}
+                          className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
+                      />
+                  </div>
+
+              </div>
+              ))}
               </div>
             </div>
             </>
@@ -345,15 +467,43 @@ export default function NewContract() {
               {/* Receiver split percentage */}
             <div>
               <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Receiver percentage Split</div>
-              <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <input
-                  type="text"
-                  placeholder="Your percentage"
-                  value={ receiverPercentage }
-                  onChange={(e) => setReceiverPercentage(e.target.value.replace(/[^0-9]/g, ''))}
-                  className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
-                />
+              <div className="gap-3 px-5 py-4 rounded-2xl" style={{ background: selectedReceivers.length === 0 ?
+                 'rgba(255,255,255,0.08)' : 'transparent' }}>
+                {selectedReceivers.map((receiver, index) => (
+                  <div key={receiver.id} className="mb-3">
+
+                      <div className="ml-4 text-xs text-white/60 mb-2">
+                          {receiver.name} Percentage
+                      </div>
+
+                      <div
+                          className="flex items-center gap-3 px-5 py-4 rounded-2xl"
+                          style={{ background: 'rgba(255,255,255,0.08)' }}
+                      >
+                          <input
+                              type="text"
+                              value={receiverPercentages[index] ?? ''}
+                              onChange={(e) => {
+                                  const updated = [...receiverPercentages];
+
+                                  updated[index] = Number(
+                                      e.target.value.replace(/[^0-9]/g, '')
+                                  );
+
+                                  setReceiverPercentages(updated);
+                              }}
+                              className="flex-1 bg-transparent text-white placeholder-white/40 outline-none"
+                          />
+
+                          <span className="text-white/60 text-lg">%</span>
+
+                      </div>
+
+                  </div>
+              ))}
+              { selectedReceivers.length === 0 && (
                 <span className="text-white/60 text-lg">%</span>
+              )}
               </div>
               {selectedReceivers.length > 0 && (
                 <div className="text-xs text-white/50 mt-2 text-center">
@@ -403,12 +553,21 @@ export default function NewContract() {
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSendContract}
-            disabled={(selectedReceivers.length === 0 && !receiver.trim()) || !startDateTime || !endDateTime || isLoading}
+            disabled={(selectedReceivers.length === 0 && !receiverInput.trim()) || !startDateTime || !endDateTime || isLoading}
             className="w-full py-5 rounded-3xl text-white font-semibold text-lg flex items-center justify-center gap-2 disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
           >
-            <Send size={20} />
-            {isLoading ? 'Sending...' : 'Send Contract'}
+            {newUserCount > 0 ? (
+              <>
+                <QrCode size={20} />
+                {isLoading ? 'Generating...' : 'QR Code'}
+              </>
+            ) : (
+              <>
+                <Send size={20} />
+                {isLoading ? 'Sending...' : 'Send Contract'}
+              </>
+            )}
           </motion.button>
         </div>
 
