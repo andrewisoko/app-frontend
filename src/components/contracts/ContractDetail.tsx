@@ -1,4 +1,4 @@
-import { Contract } from '@/services/contracts'
+import { ContractForm } from '@/services/contracts'
 import { FileText, X, Check } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
@@ -87,7 +87,7 @@ function StatusBadge({ status }: { status: string | undefined }) {
 // ── Props ──────────────────────────────────────────────────────────────────
 
 interface ContractDetailProps {
-  contract: Partial<Contract>
+  contract: Partial<ContractForm>
   /** If provided, Accept / Decline buttons are shown when status is pending/new */
   onAccept?: (id: string) => void
   onDecline?: (id: string) => void

@@ -1,3 +1,4 @@
+import { QrCode } from 'lucide-react';
 import { apiClient } from './apis/api'
 
 
@@ -10,9 +11,8 @@ export interface SignInData{
 }
 
 
-export interface Contract{
+export interface ContractForm{
     id?: string
-    updatedAt?: string,
     participants: number,
     contract_type:string,
     sender: string,
@@ -32,13 +32,9 @@ export interface Contract{
 
 
 
-export interface CreateContractRequest {
-  contract: Partial<Contract>
-  senderAccountId: string
-  receiverAccountIds: string[]
-}
 
-export interface SendContractRequest extends Partial<SignInData> {
+export interface Contract {
+  id:string,
   participants: number,
   contract_type: string,
   sender: string
@@ -57,24 +53,17 @@ export const contractsService = {
   //   return apiClient.get<Contract[]>('contract/contracts')
   // },
 
-  async getContract(id: string): Promise<Contract> {
-    return apiClient.get<Contract>(`/contracts/${id}`)
+  async getContract(id: string): Promise<ContractForm> {
+    return apiClient.get<ContractForm>(`/contracts/${id}`)
   },
 
-  async createContract(data: CreateContractRequest): Promise<Contract> {
-    return apiClient.post<Contract>('/contracts/create-contract', data)
+  async createContract(data:Contract): Promise<ContractForm> {
+    return apiClient.post<ContractForm>('/contract/create-contract', data)
   },
 
-  async sendContract(data: SendContractRequest): Promise<string> {
-    return apiClient.post<string>('/contract/send-contract', data)
+  async sendContract(id:string): Promise<string> {
+    return apiClient.post<string>('/contract/send-contract',id)
   },
 
-  async contractReceivedOnInbox(contractId: string, receiverAccountIds: string, accepted: boolean): Promise<any> {
-    return apiClient.post('/inbox/receiver-inbox-contract', {
-      contractId,
-      receiverAccountIds,
-      accepted,
-    })
-  },
 
 }

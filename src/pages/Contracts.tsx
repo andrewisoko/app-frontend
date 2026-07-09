@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Contract } from '@/services/contracts'
+import { ContractForm } from '@/services/contracts'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { SkeletonCard } from '@/components/ui/Skeleton'
@@ -14,9 +14,9 @@ export default function Contracts() {
 
   const { userProfile } = useAuth()
   const navigate = useNavigate()
-  const [contracts, setContracts] = useState<Contract[]>([])
+  const [contracts, setContracts] = useState<ContractForm[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null)
+  const [selectedContract, setSelectedContract] = useState<ContractForm | null>(null)
 
 
 
@@ -43,7 +43,7 @@ export default function Contracts() {
 
   // ── Helpers ────────────────────────────────────────────────
 
-  const getAgreementType = (contract: Contract): string => {
+  const getAgreementType = (contract: ContractForm): string => {
     if (contract.event_agreement) return 'Event agreement'
     if (contract.repayment_agreement) return 'Repayment'
     if (contract.location_agreement) return 'Location agreement'
@@ -196,14 +196,6 @@ export default function Contracts() {
                           {contract.all_usernames.length === 1 ? 'party' : 'parties'}
                         </span>
                       </div>
-
-                      {contract.updatedAt && (
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <Clock size={12} />
-                          {formatDate(contract.updatedAt)}
-                        </span>
-                      )}
-
                       {contract.location_agreement && (
                         <span className="text-xs text-gray-500 flex items-center gap-1 truncate max-w-[140px]">
                           <MapPin size={12} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Inbox, inboxService } from '@/services/inbox'
-import { Contract, contractsService } from '@/services/contracts'
+import { ContractForm } from '@/services/contracts'
 import { useAuth } from '@/hooks/useAuth'
 // import { userService } from '@/services/user'
 import { SkeletonCard } from '@/components/ui/Skeleton'
@@ -17,7 +17,7 @@ export default function InboxPage() {
   const [inbox, setInbox] = useState<Inbox | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
-  const [selectedContract, setSelectedContract] = useState<Partial<Contract> | null>(null)
+  const [selectedContract, setSelectedContract] = useState<Partial<ContractForm> | null>(null)
   const [showMostRecent, setShowMostRecent] = useState(true)
   const [showHistory, setShowHistory] = useState(true)
  
@@ -82,7 +82,7 @@ export default function InboxPage() {
     try {
       const receiverAccountId:string =  selectedContract.receiver?.[0] ?? ''
       console.log('rec account accept', receiverAccountId )
-      await contractsService.contractReceivedOnInbox(id, receiverAccountId , true)
+      await inboxService.contractReceivedOnInbox(id, receiverAccountId , true)
       setInbox((prev) => {
         if (!prev) return prev
         return {
@@ -107,7 +107,7 @@ export default function InboxPage() {
       const receiverAccountId:string =  selectedContract.receiver?.[0] ?? ''
       // console.log('rec account accept', receiverAccountId )
 
-      await contractsService.contractReceivedOnInbox(id, receiverAccountId, false)
+      await inboxService.contractReceivedOnInbox(id, receiverAccountId, false)
       // console.log('user id', user.id)
       // console.log('constract id', id)
       setInbox((prev) => {
@@ -158,11 +158,11 @@ export default function InboxPage() {
     }
   }
 
-  const formatAmount = (amount: number | string | undefined) => {
-    if (!amount) return '$0'
-    const numAmount = typeof amount === 'number' ? amount : Number(amount)
-    return `$${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-  }
+  // const formatAmount = (amount: number | string | undefined) => {
+  //   if (!amount) return '$0'
+  //   const numAmount = typeof amount === 'number' ? amount : Number(amount)
+  //   return `$${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  // }
 
   const formatDate = (date: string | undefined) => {
     if (!date) return 'Recent'
@@ -362,7 +362,7 @@ export default function InboxPage() {
                   { showHistory &&(
                  <div className="space-y-3">
                     {inbox.history
-                      .filter((c): c is Contract => c !== null && c !== undefined)
+                      .filter((c): c is ContractForm => c !== null && c !== undefined)
                       .map((contract, index) => {
                       // console.log('contracts:', inbox.history)
                       const senderUsername = contract.all_usernames?.[0]

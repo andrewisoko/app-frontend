@@ -1,5 +1,5 @@
 import { apiClient } from './apis/api'
-import { Contract } from './contracts'
+import { ContractForm } from './contracts'
 import { User } from './auth'
 
 export interface ReceivedContract {
@@ -17,8 +17,8 @@ export interface Inbox{
   id:string
   createdAt:Date;
   updatedAt:Date;
-  most_recent:Partial<Contract>[];
-  history: Partial<Contract>[];
+  most_recent:Partial<ContractForm>[];
+  history: Partial<ContractForm>[];
   user: User;
 
 }
@@ -32,18 +32,18 @@ export const inboxService = {
     return apiClient.get<Inbox>(`/inbox/${inboxId}`)
   },
 
-  // async acceptContract(id: string): Promise<void> {
-  //   return apiClient.post<void>(`/inbox/contract/${id}/accept`)
-  // },
-
-  // async declineContract(id: string): Promise<void> {
-  //   return apiClient.post<void>(`/inbox/contract/${id}/decline`)
-  // },
-
-  async postInbox(contract: Contract, user: User): Promise<void> {
+  async postInbox(contract: ContractForm, user: User): Promise<void> {
     return apiClient.post<void>('/inbox/post-inbox', {
       contract,
       user,
+    })
+  },
+
+  async contractReceivedOnInbox(contractId: string, receiverAccountId: string, accepted: boolean): Promise<any> {
+    return apiClient.post('/inbox/receiver-inbox-contract', {
+      contractId,
+      receiverAccountId,
+      accepted,
     })
   },
 }

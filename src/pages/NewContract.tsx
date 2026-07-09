@@ -6,8 +6,10 @@ import PageTransition from '@/components/animations/PageTransition'
 import { ArrowLeft, Send, UserPlus, QrCode } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { contractsService } from '@/services/contracts'
+import Modal from '@/components/ui/Modal'
+import QRCodeComponent from 'react-qr-code'
 
-type ContractType = 'existing-users' | 'with-new-users' 
+
 type SplitType = 'amount' | 'percentage'
 
 // Generate initials from name
@@ -30,7 +32,6 @@ const getAvatarColor = (str: string | null | undefined): string => {
 export default function NewContract() {
   const navigate = useNavigate()
   const { user, userProfile } = useAuth()
-  const [contractType, setContractType] = useState<ContractType>('existing-users')
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [selectedReceivers, setSelectedReceivers] = useState<Recipient[]>([])
   const [splitType, setSplitType] = useState<SplitType>('percentage')
@@ -42,8 +43,10 @@ export default function NewContract() {
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [ newUserCount,setNewUserCount ] = useState(0)
-  const [participants,setParticipants ] = useState(0)
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false)
+  const [contractId, setContractId] = useState<string | null>(null)
+  const [newUserCount, setNewUserCount] = useState(1)
+  const [participants, setParticipants] = useState(0)
 
   
   const userName = userProfile?.user_name || user?.username || 'User'
@@ -71,6 +74,24 @@ export default function NewContract() {
   ///////////////////////////////
   ///////////////////////////////
 
+  const handleNewUser = () => {
+
+    setNewUserCount(prev => prev + 1);
+ 
+    const newUser = "NEW USER" + newUserCount
+    console.log(newUserCount)
+
+    setSelectedReceivers( prev =>[
+      ...prev,{
+         
+            id: crypto.randomUUID(),
+            name: newUser
+        } as Recipient
+    
+    ])
+
+
+  }
 
   const handleSendContract = async () => {
     if (!userProfile) return
@@ -78,6 +99,12 @@ export default function NewContract() {
     if (selectedReceivers.length === 0 && !receiverInput.trim()) {
       console.error('Please select or add at least one receiver')
       alert('Please select or add at least one receiver')
+      return
+    }
+
+    
+    if(!participants ){
+       alert('Please set participants')
       return
     }
 
@@ -96,41 +123,72 @@ export default function NewContract() {
         new Date(endDateTime).toISOString()
       ]    
 
+      const conType = selectedReceivers.some(r => r.name.includes("NEW USER")) ? "with-new-user":
+      "existing-user"
+
       const requestData = {
+        id: crypto.randomUUID(),
         participants:participants,
-        contract_type: contractType,
+        contract_type: conType,
         sender: userProfile?.user_name || '',
         receiver: selectedReceivers.map(r => r.name),
         all_usernames: [
         userProfile?.user_name,...selectedReceivers.map(r => r.name)],
 
+        split_agreement: splitType,
+
+        time_agreement: timeAgreement,
+      
         sender_percentage:splitType === "percentage"
             ? Number(senderPercentage)
             : null,
+
+            receiver_percentage:
+                splitType === "percentage"
+                ? receiverPercentages
+                : [],
+
         sender_amount: splitType === "amount"
             ? Number(senderAmount)
             : null,
             
-        receiver_percentage:
-            splitType === "percentage"
-            ? receiverPercentages
-            : [],
             
         receiver_amount:
           splitType === "amount"
           ? receiverAmounts
           : [],
-        
-        time_agreement: timeAgreement,
-        split_agreement: splitType,
+    
       }
 
 
-      
+      if (requestData.contract_type === "with-new-user" && selectedReceivers.some(r => !r.name.includes('NEW USER'))){ // mixed new user with existing users
 
-      await contractsService.sendContract(requestData)
-      navigate('/app/contracts')
-      alert("Contract sent")
+          await contractsService.createContract(requestData).then(() =>{
+          contractsService.sendContract(requestData.id)
+          setContractId(requestData.id)
+          setIsQrModalOpen(true)
+           
+          })
+      }
+      else if(requestData.contract_type === "with-new-user" ){
+
+        await contractsService.createContract(requestData).then(() =>{
+          console.log('reqData',requestData)
+          setContractId(requestData.id)
+          setIsQrModalOpen(true)
+
+          })
+      }
+      else{
+        await contractsService.createContract(requestData).then(() =>{
+          console.log('reqData',requestData)
+           contractsService.sendContract(requestData.id)
+          navigate('/app/contracts')
+          alert("Contract sent")
+
+          })
+      }
+
     } catch (error) {
       console.error('Failed to send contract:', error)
       // You might want to show an error message to the user here
@@ -140,14 +198,13 @@ export default function NewContract() {
   }
 
 
+///////////////////////////////
+///////////////////////////////
+//////// Other functions //////
+///////////////////////////////
+///////////////////////////////
 
-  ///////////////////////////////
-  ///////////////////////////////
-  //////// Other functions //////
-  ///////////////////////////////
-  ///////////////////////////////
-
-  const addReceiver = (recipient: Recipient) => {
+const addReceiver = (recipient: Recipient) => {
     const exists = selectedReceivers.some(r => r.id === recipient.id);
 
     if (exists) {
@@ -161,6 +218,7 @@ export default function NewContract() {
 };
 
 const removeReceiver = (index: number) => {
+
     setSelectedReceivers(prev =>
         prev.filter((_, i) => i !== index)
     );
@@ -172,6 +230,7 @@ const removeReceiver = (index: number) => {
     setReceiverPercentages(prev =>
         prev.filter((_, i) => i !== index)
     );
+
 };
 
 const addManualReceiver = () => {
@@ -328,7 +387,7 @@ const addManualReceiver = () => {
                 {/* New User Button */}
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setNewUserCount(prev => prev + 1)}
+                  onClick={handleNewUser}
                   className="w-full mt-3 px-5 py-4 rounded-2xl text-white font-medium flex items-center justify-center gap-2"
                   style={{ background: 'rgba(91,77,255,0.2)', border: '1px solid rgba(91,77,255,0.4)' }}
                 >
@@ -557,10 +616,10 @@ const addManualReceiver = () => {
             className="w-full py-5 rounded-3xl text-white font-semibold text-lg flex items-center justify-center gap-2 disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
           >
-            {newUserCount > 0 ? (
+            { selectedReceivers.some(r => r.name.includes('NEW USER')) ? (
               <>
                 <QrCode size={20} />
-                {isLoading ? 'Generating...' : 'QR Code'}
+                {isLoading ? 'Generating...' : 'Generate QR Code'}
               </>
             ) : (
               <>
@@ -570,6 +629,45 @@ const addManualReceiver = () => {
             )}
           </motion.button>
         </div>
+
+        {/* QR Code Modal */}
+        <Modal
+          isOpen={isQrModalOpen}
+          onClose={() => setIsQrModalOpen(false)}
+          title="Contract QR Code"
+        >
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-white/80 text-center text-sm">
+              Share this QR code with new users to join the contract
+            </p>
+            
+            {contractId && (
+              <div className="bg-white p-4 rounded-xl">
+                <QRCodeComponent
+                  value={`${window.location.origin}/app/contract/${contractId}`}
+                  size={200}
+                  level="H"
+                />
+              </div>
+            )}
+            
+            <p className="text-white/60 text-xs text-center mt-2">
+              Contract ID: {contractId}
+            </p>
+            
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setIsQrModalOpen(false)
+                navigate('/app/contracts')
+              }}
+              className="w-full py-3 rounded-2xl text-white font-medium mt-2"
+              style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
+            >
+              Done
+            </motion.button>
+          </div>
+        </Modal>
 
       </div>
     </PageTransition>

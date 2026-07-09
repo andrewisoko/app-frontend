@@ -1,5 +1,5 @@
 import { apiClient } from './apis/api'
-import { Contract } from './contracts'
+import { ContractForm } from './contracts'
 
 
 export interface UserProfile {
@@ -14,7 +14,7 @@ export interface UserProfile {
   account: string 
   inbox: string | { id: string } // Can be either ID string or object with id
   recipients: string[]
-  created_contract:  Contract[]
+  created_contract:  ContractForm[]
   main_bank: string
   created_at: string
   updated_at: string

@@ -1,5 +1,5 @@
 import { apiClient } from './apis/api'
-import { Contract } from './contracts';
+import { ContractForm } from './contracts';
 
 export interface Transaction {
 
@@ -10,7 +10,7 @@ export interface Transaction {
     amount:number;
     timestamp:string
     currency:string;
-    contract?: Contract;
+    contract?: ContractForm;
 }
 
 
