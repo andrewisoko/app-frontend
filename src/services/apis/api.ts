@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios'
 
-const API_BASE_URL = '/api'
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://[::1]:3100'
+const API_BASE_URL = import.meta.env.DEV ? '/api' : BACKEND_URL
 
 class ApiClient {
   private client: AxiosInstance

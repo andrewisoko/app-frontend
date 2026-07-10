@@ -17,6 +17,7 @@ import SendMoney from '@/pages/SendMoney'
 import Transfer from '@/pages/Transfer'
 import TopUp from '@/pages/TopUp'
 import NewContract from '@/pages/NewContract'
+import QrCodeContract from '@/pages/QrCodeContract'
 import { LandingPage } from './pages/LandingPage'
 import { POSTerminal } from './pages/POSterminal'
 import { TerminalProvider } from './contexts/TerminalContext'
@@ -79,6 +80,11 @@ function App() {
               <PublicRoute>
                 <POSTerminal/>
               </PublicRoute>
+            } />
+
+            {/* QR Code Contract - Public route for new users */}
+            <Route path="/app/contract/:id" element={
+              <QrCodeContract />
             } />
 
             

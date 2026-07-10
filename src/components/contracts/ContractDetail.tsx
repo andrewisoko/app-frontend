@@ -238,12 +238,7 @@ export default function ContractDetail({
           </div>
         )}
 
-        {contract.updatedAt && (
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">Last Updated</span>
-            <span className="text-white font-medium">{formatDate(contract.updatedAt)}</span>
-          </div>
-        )}
+
       </div>
 
       {/* Accept / Decline — only shown in Inbox context */}

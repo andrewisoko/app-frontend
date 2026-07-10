@@ -1,35 +1,40 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  css: {
-    postcss: {
-      plugins: [tailwindcss, autoprefixer],
-    },
-  },
-  resolve: {
-    alias: {
-      '@': '/src',
-    },
-  },
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3100',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-          '/payment-api': {
-        target: 'http://localhost:3002/payment-drafts',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/payment-api/, ''),
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, '.', '')
+  const backendUrl = env.VITE_BACKEND_URL || 'http://[::1]:3100'
+
+  return {
+    plugins: [react()],
+    css: {
+      postcss: {
+        plugins: [tailwindcss, autoprefixer],
       },
     },
-  },
-  
+    resolve: {
+      alias: {
+        '@': '/src',
+      },
+    },
+    server: {
+      host: '0.0.0.0',
+      port: 5175,
+      strictPort: true,
+      proxy: {
+        '/api': {
+          target: backendUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
+        },
+        '/payment-api': {
+          target: 'http://localhost:3002/payment-drafts',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/payment-api/, ''),
+        },
+      },
+    },
+  }
 })

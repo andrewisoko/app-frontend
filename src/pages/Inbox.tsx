@@ -328,8 +328,7 @@ export default function InboxPage() {
                                     <span className="text-gray-400">{timeAgreement}</span>
                                   </>
                                 )}
-                                <span className="text-gray-400">•</span>
-                                <span className="text-gray-400">{formatDate(contract.updatedAt)}</span>
+                        
                               </div>
                             </div>
                           </div>
@@ -411,8 +410,6 @@ export default function InboxPage() {
                                     <span className="text-gray-400">{timeAgreement}</span>
                                   </>
                                 )}
-                                <span className="text-gray-400">•</span>
-                                <span className="text-gray-400">{formatDate(contract.updatedAt)}</span>
                               </div>
                             </div>
                           </div>

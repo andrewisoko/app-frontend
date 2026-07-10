@@ -29,6 +29,19 @@ const getAvatarColor = (str: string | null | undefined): string => {
   return colors[hash % colors.length]
 }
 
+// Generate UUID with fallback for older browsers
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  // Fallback UUID v4 generator
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
+
 export default function NewContract() {
   const navigate = useNavigate()
   const { user, userProfile } = useAuth()
@@ -47,6 +60,8 @@ export default function NewContract() {
   const [contractId, setContractId] = useState<string | null>(null)
   const [newUserCount, setNewUserCount] = useState(1)
   const [participants, setParticipants] = useState(0)
+
+  const BASE_URL = (import.meta.env.VITE_FRONTEND_URL || window.location.origin).replace(/\/$/, '')
 
   
   const userName = userProfile?.user_name || user?.username || 'User'
@@ -77,14 +92,12 @@ export default function NewContract() {
   const handleNewUser = () => {
 
     setNewUserCount(prev => prev + 1);
- 
-    const newUser = "NEW USER" + newUserCount
-    console.log(newUserCount)
+    const newUser = "NEW USER " + newUserCount
 
     setSelectedReceivers( prev =>[
       ...prev,{
          
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name: newUser
         } as Recipient
     
@@ -127,7 +140,7 @@ export default function NewContract() {
       "existing-user"
 
       const requestData = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         participants:participants,
         contract_type: conType,
         sender: userProfile?.user_name || '',
@@ -172,12 +185,18 @@ export default function NewContract() {
       }
       else if(requestData.contract_type === "with-new-user" ){
 
-        await contractsService.createContract(requestData).then(() =>{
-          console.log('reqData',requestData)
-          setContractId(requestData.id)
-          setIsQrModalOpen(true)
 
-          })
+        ///test ///
+        setContractId('0328a86c-3715-40c9-89cb-55e028f2f587')
+        setIsQrModalOpen(true)
+
+
+        // await contractsService.createContract(requestData).then(() =>{
+        //   console.log('reqData',requestData)
+        //   setContractId(requestData.id)
+        //   setIsQrModalOpen(true)
+
+        //   })
       }
       else{
         await contractsService.createContract(requestData).then(() =>{
@@ -220,6 +239,21 @@ const addReceiver = (recipient: Recipient) => {
 const removeReceiver = (index: number) => {
 
     setSelectedReceivers(prev =>
+    prev.filter((item, i) => {
+        if (item.name.includes("NEW USER")) {
+          if (newUserCount === 1){
+            setNewUserCount(1)
+          }
+          else{
+            const countStepBack = newUserCount - 1
+            setNewUserCount(countStepBack)
+          }
+          return i !== index; 
+        }
+    })
+);
+
+    setSelectedReceivers(prev =>
         prev.filter((_, i) => i !== index)
     );
 
@@ -247,7 +281,7 @@ const addManualReceiver = () => {
     setSelectedReceivers(prev => [
         ...prev,
         {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name: username
         } as Recipient
     ]);
@@ -580,11 +614,12 @@ const addManualReceiver = () => {
             <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Time Agreement</div>
             <div className="space-y-3">
               <div>
-                <div className="text-xs text-white/50 mb-2">Start</div>
+                <div className="text-xs text-white/50 mb-2">Start Date & Time</div>
                 <input
                   type="datetime-local"
                   value={startDateTime}
                   onChange={(e) => setStartDateTime(e.target.value)}
+                  step="60"
                   className="w-full px-5 py-4 rounded-2xl text-white outline-none"
                   style={{ 
                     background: 'rgba(255,255,255,0.08)',
@@ -593,11 +628,12 @@ const addManualReceiver = () => {
                 />
               </div>
               <div>
-                <div className="text-xs text-white/50 mb-2">End</div>
+                <div className="text-xs text-white/50 mb-2">End Date & Time</div>
                 <input
                   type="datetime-local"
                   value={endDateTime}
                   onChange={(e) => setEndDateTime(e.target.value)}
+                  step="60"
                   className="w-full px-5 py-4 rounded-2xl text-white outline-none"
                   style={{ 
                     background: 'rgba(255,255,255,0.08)',
@@ -644,16 +680,12 @@ const addManualReceiver = () => {
             {contractId && (
               <div className="bg-white p-4 rounded-xl">
                 <QRCodeComponent
-                  value={`${window.location.origin}/app/contract/${contractId}`}
+                  value={`${BASE_URL}/app/contract/${contractId}`}
                   size={200}
                   level="H"
                 />
               </div>
             )}
-            
-            <p className="text-white/60 text-xs text-center mt-2">
-              Contract ID: {contractId}
-            </p>
             
             <motion.button
               whileTap={{ scale: 0.95 }}

@@ -54,7 +54,7 @@ export const contractsService = {
   // },
 
   async getContract(id: string): Promise<ContractForm> {
-    return apiClient.get<ContractForm>(`/contracts/${id}`)
+    return apiClient.get<ContractForm>(`/contract/${id}`)
   },
 
   async createContract(data:Contract): Promise<ContractForm> {
