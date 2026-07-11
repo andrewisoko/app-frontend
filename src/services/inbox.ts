@@ -39,11 +39,11 @@ export const inboxService = {
     })
   },
 
-  async contractReceivedOnInbox(contractId: string, receiverAccountId: string, accepted: boolean): Promise<any> {
+  async contractReceivedOnInbox(contractId: string, receiverAccountId: string, decision: boolean): Promise<any> {
     return apiClient.post('/inbox/receiver-inbox-contract', {
       contractId,
       receiverAccountId,
-      accepted,
+      accepted: decision,
     })
   },
 }

@@ -154,6 +154,9 @@ export default function Login() {
             </button>
           </p>
         </div>
+        <div className="mt-12 text-center text-xs text-neutral-400 select-none">
+        <p>© 2026 TransAct Inc. Authorised and Regulated by the Financial Conduct Authority (FCA).</p>
+      </div>
       </motion.div>
     </div>
   )

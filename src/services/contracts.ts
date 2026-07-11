@@ -1,15 +1,19 @@
-import { QrCode } from 'lucide-react';
 import { apiClient } from './apis/api'
 
 
 export interface SignInData{
-
   name:string,
   surname:string,
   mobile_number:string,
   email:string
 }
 
+export interface QRcodeNewUser {
+    contractId:string,
+    decision: boolean,
+    amount?:number,
+    bank?:string,
+}
 
 export interface ContractForm{
     id?: string
@@ -54,16 +58,19 @@ export const contractsService = {
   // },
 
   async getContract(id: string): Promise<ContractForm> {
-    return apiClient.get<ContractForm>(`/contract/${id}`)
+    return await apiClient.get<ContractForm>(`/contract/${id}`)
   },
 
   async createContract(data:Contract): Promise<ContractForm> {
-    return apiClient.post<ContractForm>('/contract/create-contract', data)
+    return await apiClient.post<ContractForm>('/contract/create-contract', data)
   },
 
   async sendContract(id:string): Promise<string> {
-    return apiClient.post<string>('/contract/send-contract',id)
+    return await apiClient.post<string>('/contract/send-contract',id)
   },
-
-
+ 
+  async newAUserQRcode( data: QRcodeNewUser ):Promise<string>{
+    return await apiClient.post<string>('/contract/qrcode-new-user',{data})
+  }
+         
 }

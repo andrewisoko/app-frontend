@@ -6,6 +6,7 @@ import ContractDetail from '@/components/contracts/ContractDetail'
 import { contractsService, ContractForm } from '@/services/contracts'
 import PageTransition from '@/components/animations/PageTransition'
 
+
 export default function QrCodeContract() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -38,14 +39,32 @@ export default function QrCodeContract() {
     fetchContract()
   }, [id])
 
-  const handleAccept = (contractId: string) => {
-    // TODO: Implement accept logic
-    console.log('Accept contract:', contractId)
+  const handleAccept = async () => {
+    if (!contract?.id) {
+      setError('No contract ID provided')
+      return
+    }
+    navigate('/app/qr-code/new-user/onboarding', {
+      state: {
+        contractId: contract.id,
+      },
+    })
   }
 
-  const handleDecline = (contractId: string) => {
-    // TODO: Implement decline logic
-    console.log('Decline contract:', contractId)
+  const handleDecline = async (contractId: string) => {
+
+      if(!contract) return
+      
+      try {
+        await contractsService.newAUserQRcode({
+            contractId:contract.id ?? 'not found',
+            decision:false
+        })
+    } catch (error) {
+        console.log('QR code contract decline', error)
+        
+    }
+    console.log('contract declined', contractId)
   }
 
   return (
@@ -101,7 +120,7 @@ export default function QrCodeContract() {
             <ContractDetail
               contract={contract}
               onAccept={handleAccept}
-              onDecline={handleDecline}
+              onDecline={() => handleDecline(contract.id ?? 'not found')}
               processingId={null}
             />
           )}

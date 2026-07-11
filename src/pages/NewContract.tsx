@@ -103,7 +103,6 @@ export default function NewContract() {
     
     ])
 
-
   }
 
   const handleSendContract = async () => {

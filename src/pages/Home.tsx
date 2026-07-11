@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect} from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { accountsService } from '@/services/accounts'
@@ -15,11 +15,9 @@ import {
   Eye, 
   ChevronRight,
   Bell,
-  CheckCircle2,
-  XCircle,
-  Clock
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { notificationsService } from '@/services/notifications'
 
 // Icon mapping for transaction categories
 const getCategoryIcon = () => {
@@ -114,7 +112,24 @@ export default function Home() {
         const transactionsData = await transactionsService.getTransactions(accountId);
         setTransactions(transactionsData.slice(0, 5));
       } catch {
+        console.error('failed to retrieve user transactions')
         // Transactions endpoint may not be ready
+      }
+
+      // fetch notifications
+      try {
+
+
+       const notificactionData = await notificationsService.getUserNotifications(userProfile.id);
+
+       setBellNotification(()=>{
+         
+         const unRead = notificactionData.filter( notMarked => notMarked.read === false)
+         return unRead.length
+       })
+ 
+      } catch (error) {
+        console.log(' bell failed to display number of notifications')
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -122,28 +137,9 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-
   fetchData();
 }, [userProfile]);
 
-  // useEffect(() => {
-  //   if (!userProfile) return
-  //   const sentContracts = userProfile.created_contract
-  //   if (!sentContracts?.length) return
-
-  //   try {
-  //     const latest = sentContracts[sentContracts.length - 1]
-  //     if (
-  //       sentContracts.length !== prevContractsLength.current &&
-  //       (latest.contract_status === 'accepted' || latest.contract_status === 'declined')
-  //     ) {
-  //       setBellNotification(1)
-  //     }
-  //     prevContractsLength.current = sentContracts.length
-  //   } catch (error) {
-  //     console.log(`bell failed to alert user ${error}`)
-  //   }
-  // })
 
   const handleAddRecipient = () => {
     const username = newRecipientUsername.trim()
@@ -174,7 +170,7 @@ export default function Home() {
         {/* Header with notification and profile */}
         <div className="flex items-center justify-end gap-4 px-6 pt-4 pb-2">
           <button 
-            onClick={() => navigate('/app/notificattion')}
+            onClick={() => navigate('/app/notification')}
             className="text-white/70 hover:text-white transition-colors relative"
           >
             <Bell size={22} />
@@ -479,6 +475,9 @@ export default function Home() {
           )}
         </Modal>
 
+      </div>
+      <div className="mt-12 text-center text-xs text-neutral-400 select-none">
+        <p>© 2026 TransAct Inc. Authorised and Regulated by the Financial Conduct Authority (FCA).</p>
       </div>
     </PageTransition>
   )

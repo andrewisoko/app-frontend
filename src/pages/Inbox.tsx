@@ -164,11 +164,11 @@ export default function InboxPage() {
   //   return `$${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   // }
 
-  const formatDate = (date: string | undefined) => {
-    if (!date) return 'Recent'
-    const d = new Date(date)
-    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  }
+  // const formatDate = (date: string | undefined) => {
+  //   if (!date) return 'Recent'
+  //   const d = new Date(date)
+  //   return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  // }
 
   const formatTimeAgreement = (timeAgreement: any): string => {
     if (!timeAgreement) return ''

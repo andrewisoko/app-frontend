@@ -1,38 +1,21 @@
 import { apiClient } from './apis/api'
 
-export interface ContractNotification {
-  id: string
-  contractId: string
-  senderId: string
-  receiverId: string
-  receiverName: string
-  action: 'accepted' | 'declined'
-  timestamp: string
-  read: boolean
+export interface NotificationUser {
+    id: string;
+    from:string
+    message: string;
+    read:boolean
+    created_at: Date;
 }
 
 export const notificationsService = {
-  // Fetch contract notifications for the current user (as sender)
-  async getContractNotifications(userId: string): Promise<ContractNotification[]> {
-    try {
-      // This endpoint would ideally be on the backend
-      // For now, we'll fetch contracts and check for status changes
-      const response = await apiClient.get<ContractNotification[]>(`/notifications/contracts/${userId}`)
-      return response
-    } catch (error) {
-      // Fallback: return empty array if endpoint doesn't exist yet
-      console.log('Notifications endpoint not available yet:', error)
-      return []
-    }
-  },
 
-  // Mark notification as read
-  async markAsRead(notificationId: string): Promise<void> {
-    try {
-      await apiClient.patch(`/notifications/${notificationId}/read`)
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error)
-    }
+
+  async getUserNotifications(userId:string):Promise<NotificationUser[]>{
+    return await apiClient.get(`/notification/${userId}`)
+  },
+  async getNotification(id:string):Promise<NotificationUser>{
+    return await apiClient.get(`/notification/${id}`)
   },
 
   // Clear all notifications

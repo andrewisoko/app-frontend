@@ -22,6 +22,8 @@ import { LandingPage } from './pages/LandingPage'
 import { POSTerminal } from './pages/POSterminal'
 import { TerminalProvider } from './contexts/TerminalContext'
 import { DraftProvider } from './contexts/PaymentDraftContext'
+import QrCodeOnboarding from './pages/QrCodeOnboarding'
+import { Notifications } from './pages/Notifications'
 
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -87,8 +89,11 @@ function App() {
               <QrCodeContract />
             } />
 
+          <Route path="/app/qr-code/new-user/onboarding" 
+              element={
+                <QrCodeOnboarding/>
+              }/>
             
-          
           <Route path="/onboarding" element={
             <PublicRoute>
               <Onboarding />
@@ -123,6 +128,7 @@ function App() {
             <Route path="transfer" element={<Transfer />} />
             <Route path="topup" element={<TopUp />} />
             <Route path="contracts/new" element={<NewContract />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/welcome" replace />} />
