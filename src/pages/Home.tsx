@@ -198,7 +198,7 @@ export default function Home() {
         >
           <p className="text-white/60 text-sm mb-1">Welcome back</p>
           <h1 className="text-2xl font-bold text-white">
-            {userProfile?.user_name || user?.username || 'User'}
+            {userProfile?.name || 'User'}
           </h1>
         </motion.div>
 

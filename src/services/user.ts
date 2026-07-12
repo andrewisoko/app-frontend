@@ -21,11 +21,12 @@ export interface UserProfile {
 }
 
 export interface UpdateProfileData {
-  name?: string
-  surname?: string
-  mobileNumber?: string
-  email?: string
-  password:string
+  name: string
+  surname: string
+  mobileNumber: string
+  email: string
+  password:string,
+  confirmPassword:string
 }
 
 export const userService = {

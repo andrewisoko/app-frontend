@@ -41,15 +41,17 @@ export interface Contract {
   id:string,
   participants: number,
   contract_type: string,
+  transaction_type:string,
   sender: string
   receiver: string[]
   all_usernames:string[]
+  contract_status?: string,
   sender_percentage: number | null
   sender_amount: number | null
-  time_agreement: string[]
   receiver_percentage: number[]
   receiver_amount: number[]
   split_agreement: string
+  time_agreement: string[] | null
 }
 
 export const contractsService = {

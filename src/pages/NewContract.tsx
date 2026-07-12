@@ -11,6 +11,7 @@ import QRCodeComponent from 'react-qr-code'
 
 
 type SplitType = 'amount' | 'percentage'
+ type TransactionType = "one-time" | "with-time-agreement"
 
 // Generate initials from name
 const getInitials = (name?: string | null): string => {
@@ -53,11 +54,12 @@ export default function NewContract() {
   const [receiverPercentages, setReceiverPercentages] = useState<number[]>([]);
   const [receiverAmounts, setReceiverAmounts] =useState<number[]>([]);
   const [receiverInput, setReceiverInput] = useState<string>('')
-  const [startDateTime, setStartDateTime] = useState('')
-  const [endDateTime, setEndDateTime] = useState('')
+  const [startDateTime, setStartDateTime] = useState<string>('')
+  const [endDateTime, setEndDateTime] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [isQrModalOpen, setIsQrModalOpen] = useState(false)
   const [contractId, setContractId] = useState<string | null>(null)
+  const [transactionType, setTransactionType] = useState<TransactionType>('one-time')  //to add the ui 
   const [newUserCount, setNewUserCount] = useState(1)
   const [participants, setParticipants] = useState(0)
 
@@ -114,6 +116,10 @@ export default function NewContract() {
       return
     }
 
+    if(userProfile.user_type !== "completed"){
+       alert('The profile needs to be completed')
+      return
+    }
     
     if(!participants ){
        alert('Please set participants')
@@ -130,10 +136,11 @@ export default function NewContract() {
 
     try {
       // Build the time agreement array as ISO strings
-      const timeAgreement: string[] = [
+      
+      const timeAgreement: string[] | null = transactionType === "with-time-agreement" ? [
         new Date(startDateTime).toISOString(),
         new Date(endDateTime).toISOString()
-      ]    
+      ] : null   
 
       const conType = selectedReceivers.some(r => r.name.includes("NEW USER")) ? "with-new-user":
       "existing-user"
@@ -142,33 +149,33 @@ export default function NewContract() {
         id: generateUUID(),
         participants:participants,
         contract_type: conType,
+        transaction_type: transactionType,
         sender: userProfile?.user_name || '',
         receiver: selectedReceivers.map(r => r.name),
         all_usernames: [
         userProfile?.user_name,...selectedReceivers.map(r => r.name)],
 
         split_agreement: splitType,
-
-        time_agreement: timeAgreement,
-      
+        
         sender_percentage:splitType === "percentage"
-            ? Number(senderPercentage)
+        ? Number(senderPercentage)
             : null,
-
-            receiver_percentage:
-                splitType === "percentage"
-                ? receiverPercentages
-                : [],
-
-        sender_amount: splitType === "amount"
+            
+            sender_amount: splitType === "amount"
             ? Number(senderAmount)
             : null,
             
+            receiver_percentage:
+            splitType === "percentage"
+            ? receiverPercentages
+            : [],
             
-        receiver_amount:
-          splitType === "amount"
-          ? receiverAmounts
-          : [],
+            receiver_amount:
+            splitType === "amount"
+            ? receiverAmounts
+            : [],
+
+            time_agreement: timeAgreement,
     
       }
 
@@ -609,6 +616,7 @@ const addManualReceiver = () => {
           )}
 
           {/* Time Agreement */}
+          { transactionType === 'with-time-agreement' && (
           <div>
             <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Time Agreement</div>
             <div className="space-y-3">
@@ -642,6 +650,7 @@ const addManualReceiver = () => {
               </div>
             </div>
           </div>
+          )}
 
           {/* Send Contract Button */}
           <motion.button

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef} from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence,motion } from 'framer-motion';
 import { 
@@ -8,51 +8,21 @@ import {
 } from 'lucide-react';
 import { SUPPORTED_BANKS } from '@/bank/data';
 import { getBankLogo } from '@/components/BankLogos';
-// import { OnboardingState, SimulationLog } from './types';
-import { SimulationLog } from '@/bank/types';
 import { contractsService } from '@/services/contracts';
+import { useNavigate } from 'react-router-dom';
 
 export default function QrCodeOnboarding() {
-  const location = useLocation();
-  const contractId = (location.state as { contractId?: string } | null)?.contractId;
-
+  const navigate = useNavigate()
   const [amount, setAmount] = useState<string>('');
   const [selectedBankName, setSelectedBankName] = useState<string | null>(null);
   const [step] = useState<'input' | 'connecting' | 'success'>('input');
   const [isFocused, setIsFocused] = useState<boolean>(false);
-  const [logs, setLogs] = useState<SimulationLog[]>([
-    {
-      id: '1',
-      timestamp: new Date().toLocaleTimeString(),
-      event: 'Onboarding session initialized.',
-      type: 'info'
-    }
-  ]);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const location = useLocation();
+  const contractId = (location.state as { contractId?: string } | null)?.contractId;
 
   // Reference elements
   const inputRef = useRef<HTMLInputElement>(null);
-  const logEndRef = useRef<HTMLDivElement>(null);
-
-  // ----------------------------------------------------
-  // Logging Helper
-  // ----------------------------------------------------
-  const addLog = (event: string, type: 'info' | 'success' | 'warning' = 'info') => {
-    const newLog: SimulationLog = {
-      id: Math.random().toString(),
-      timestamp: new Date().toLocaleTimeString(),
-      event,
-      type
-    };
-    setLogs(prev => [...prev, newLog]);
-  };
-
-  // Scroll logs to bottom
-  useEffect(() => {
-    if (logEndRef.current) {
-      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [logs]);
 
 
   //////////////////////////
@@ -86,21 +56,14 @@ export default function QrCodeOnboarding() {
     setAmount(sanitized);
     setValidationError(null);
     
-    if (sanitized) {
-      addLog(`Amount updated to £${formatValue(sanitized)}`, 'info');
-    } else {
-      addLog('Amount input cleared', 'info');
-    }
   };
 
   // Select Bank Handler
   const handleBankSelect = (bankName: string) => {
-    const bank = SUPPORTED_BANKS.find(b => b.name === bankName);
+
     setSelectedBankName(bankName);
     setValidationError(null);
-    if (bank) {
-      addLog(`Selected partner bank: ${bank.name} (${bank.fullName})`, 'info');
-    }
+
   };
 
   const handleSubmit = async (
@@ -111,7 +74,6 @@ export default function QrCodeOnboarding() {
   ) => {
      if (!contractId) {
         setValidationError('Missing contract ID')
-        addLog('Validation failed: Contract ID is missing', 'warning')
         return
       }
 
@@ -121,6 +83,9 @@ export default function QrCodeOnboarding() {
               decision:false,
               amount:amount,
               bank:bank
+          })
+          navigate('/app/qr-code/loading-new-profile',{
+            state:{ bank: bank}
           })
       } catch (error) {
           console.log('QR code contract accepted', error)
