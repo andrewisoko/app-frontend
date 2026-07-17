@@ -27,10 +27,19 @@ export interface User {
   role: string
 }
 
+export interface QrCodeOnboarding {
+
+  contractId:string,
+  decision: boolean,
+  amount?:number,
+  bank?:string,
+}
+
 interface RawLoginResponse {
   access_token: string
   refresh_token: string
 }
+
 
 function decodeTokenUser(token: string): User {
   try {
@@ -49,6 +58,12 @@ function decodeTokenUser(token: string): User {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const raw = await apiClient.post<RawLoginResponse>('/user/login', credentials)
+    const user = decodeTokenUser(raw.access_token)
+    return { token: raw.access_token, user }
+  },
+
+  async newAUserFromQRcode( data: QrCodeOnboarding): Promise<AuthResponse> {
+    const raw = await apiClient.post<RawLoginResponse>('/contract/qrcode-new-user', data)
     const user = decodeTokenUser(raw.access_token)
     return { token: raw.access_token, user }
   },

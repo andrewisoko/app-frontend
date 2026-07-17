@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   login: (token: string, user: User) => Promise<void>
+  qrCodeSignIn: (token: string, user: User) => Promise<void>
   logout: () => void
   updateUser: (user: User) => void
 }
@@ -60,6 +61,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const qrCodeSignIn = async (token: string, userData: User) => {
+    authService.setToken(token)
+    setUser(userData)
+    try {
+      const profile = await userService.getProfile(userData.id)
+      setUserProfile(profile)
+    } catch {
+      // Profile fetch failed — proceed without profile
+    }
+  }
+
   const logout = () => {
     authService.logout()
     setUser(null)
@@ -78,6 +90,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        qrCodeSignIn,
         logout,
         updateUser,
       }}

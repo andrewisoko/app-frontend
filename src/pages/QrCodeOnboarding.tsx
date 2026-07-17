@@ -1,4 +1,4 @@
-import React, { useState, useRef} from 'react';
+import React, { useState, useRef, useEffect} from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence,motion } from 'framer-motion';
 import { 
@@ -10,6 +10,8 @@ import { SUPPORTED_BANKS } from '@/bank/data';
 import { getBankLogo } from '@/components/BankLogos';
 import { contractsService } from '@/services/contracts';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { authService } from '@/services/auth';
 
 export default function QrCodeOnboarding() {
   const navigate = useNavigate()
@@ -20,9 +22,24 @@ export default function QrCodeOnboarding() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const location = useLocation();
   const contractId = (location.state as { contractId?: string } | null)?.contractId;
+   const { qrCodeSignIn, isAuthenticated } = useAuth()
 
   // Reference elements
   const inputRef = useRef<HTMLInputElement>(null);
+
+
+  //////////////////////////
+  //////////////////////////
+  /////// Use effect ///////
+  //////////////////////////
+  //////////////////////////
+
+    useEffect(() => {
+      if (isAuthenticated) {
+        navigate('/app/qr-code/loading-new-profile',
+          {replace:true})
+      }
+    }, [isAuthenticated,navigate])
 
 
   //////////////////////////
@@ -78,20 +95,21 @@ export default function QrCodeOnboarding() {
       }
 
    try {
-          await contractsService.newAUserQRcode({
-              contractId,
-              decision:false,
-              amount:amount,
-              bank:bank
-          })
-          navigate('/app/qr-code/loading-new-profile',{
-            state:{ bank: bank}
-          })
+      await contractsService.newAUserQRcode({
+          contractId,
+          decision:true,
+          amount:amount,
+          bank:bank
+      })
+      const response = await authService.newAUserFromQRcode({ contractId, decision:true ,amount,bank })
+      qrCodeSignIn(response.token,response.user)
+      // navigate('/app/qr-code/loading-new-profile',{
+      //   state:{ bank: bank}
+      // })
+      console.log('contract accepted', contractId)
       } catch (error) {
           console.log('QR code contract accepted', error)
-          
       }
-      console.log('contract accepted', contractId)
   }
 
   /////////////////////////
