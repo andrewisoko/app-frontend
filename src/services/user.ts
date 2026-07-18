@@ -38,6 +38,6 @@ export const userService = {
   },
 
   async updateProfile(userId: string, data: UpdateProfileData): Promise<UserProfile> {
-    return apiClient.patch<UserProfile>(`/user/${userId}`, data)
+    return apiClient.patch<UserProfile>(`/user/update-default${userId}`, data)
   },
 }

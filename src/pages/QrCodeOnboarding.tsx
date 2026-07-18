@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { SUPPORTED_BANKS } from '@/bank/data';
 import { getBankLogo } from '@/components/BankLogos';
-import { contractsService } from '@/services/contracts';
+import { Contract, contractsService } from '@/services/contracts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/services/auth';
@@ -22,7 +22,9 @@ export default function QrCodeOnboarding() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const location = useLocation();
   const contractId = (location.state as { contractId?: string } | null)?.contractId;
-   const { qrCodeSignIn, isAuthenticated } = useAuth()
+  const [contract, setContract ] = useState<Contract>()
+  const { qrCodeSignIn, isAuthenticated } = useAuth()
+
 
   // Reference elements
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,6 +41,13 @@ export default function QrCodeOnboarding() {
         navigate('/app/qr-code/loading-new-profile',
           {replace:true})
       }
+      if (! contractId) return;
+
+      const findContract = async () => {
+        const currentContract = await contractsService.getContract(contractId)
+        setContract(currentContract)
+      }
+      findContract()
     }, [isAuthenticated,navigate])
 
 
@@ -142,8 +151,8 @@ export default function QrCodeOnboarding() {
 
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col items-center justify-center p-0 md:p-6 lg:p-12 antialiased selection:bg-neutral-900 selection:text-white" id="main-container">
-        <div >
-          <div>
+        { contract?.contract_status ==="accepted" ?(
+
             <AnimatePresence mode="wait">
               {/* STEP 1: INPUT CONTROLS SCREEN */}
               {step === 'input' && (
@@ -317,15 +326,13 @@ export default function QrCodeOnboarding() {
                       </button>
                     </motion.div>
                   )}
-
-                </AnimatePresence>
-
+              <div className="mt-12 text-center text-xs text-neutral-400 select-none">
+                <p>© 2026 TransAct Inc. Authorised and Regulated by the Financial Conduct Authority (FCA).</p>
               </div>
-            </div>
-
-      <div className="mt-12 text-center text-xs text-neutral-400 select-none">
-        <p>© 2026 TransAct Inc. Authorised and Regulated by the Financial Conduct Authority (FCA).</p>
-      </div>
+            </AnimatePresence>
+        ):(
+           <div className="text-white/60 text-sm py-4">No recipients found</div>
+        )}
 
     </div>
   );

@@ -195,11 +195,22 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="px-6 pt-6 pb-2"
-        >
-          <p className="text-white/60 text-sm mb-1">Welcome back</p>
-          <h1 className="text-2xl font-bold text-white">
-            {userProfile?.name || 'User'}
-          </h1>
+          >
+          {userProfile?.name !== 'NEW' ?(
+            <>
+            <p className="text-white/60 text-sm mb-1">Welcome back</p>
+             <h1 className="text-2xl font-bold text-white">
+              {userProfile?.name || 'User'}
+            </h1>
+            </>
+          ):(
+            <>
+            <p className="text-white/60 text-sm mb-1">Welcome</p>
+            <h1 className="text-2xl font-bold text-white">
+              {userProfile?.user_name || 'NEW USER'}
+            </h1>
+            </>
+          )}
         </motion.div>
 
         {/* Balance Card */}

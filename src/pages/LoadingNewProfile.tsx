@@ -62,7 +62,7 @@ useEffect(() => {
   if (progress === 100 && step === 'processing') {
     
     const timeout = setTimeout(() => {
-      setStep('dashboard');
+      navigate('/app')
     }, 800);
     
     return () => clearTimeout(timeout);
