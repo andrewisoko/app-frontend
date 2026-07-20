@@ -116,6 +116,11 @@ export default function NewContract() {
       return
     }
 
+    if(participants !== selectedReceivers.length + 1){
+         alert('Incorrect number of participants')
+      return
+    }
+
     if(userProfile.user_type !== "completed"){
        alert('The profile needs to be completed')
       return
@@ -126,7 +131,34 @@ export default function NewContract() {
       return
     }
 
-    if (!startDateTime || !endDateTime) {
+    // Validate split values
+    if (splitType === 'percentage') {
+      if (!senderPercentage || Number(senderPercentage) <= 0) {
+        alert('Please set sender percentage')
+        return
+      }
+      if (selectedReceivers.length > 0) {
+        const hasEmptyPercentage = receiverPercentages.some((p, idx) => idx < selectedReceivers.length && (!p || p <= 0))
+        if (hasEmptyPercentage || receiverPercentages.length < selectedReceivers.length) {
+          alert('Please set percentages for all receivers')
+          return
+        }
+      }
+    } else if (splitType === 'amount') {
+      if (!senderAmount || Number(senderAmount) <= 0) {
+        alert('Please set sender amount')
+        return
+      }
+      if (selectedReceivers.length > 0) {
+        const hasEmptyAmount = receiverAmounts.some((a, idx) => idx < selectedReceivers.length && (!a || a <= 0))
+        if (hasEmptyAmount || receiverAmounts.length < selectedReceivers.length) {
+          alert('Please set amounts for all receivers')
+          return
+        }
+      }
+    }
+
+    if (transactionType === 'with-time-agreement' && (!startDateTime || !endDateTime)) {
       console.error('Please set both start and end dates')
       alert('Please set both start and end dates for the time agreement')
       return
@@ -190,19 +222,11 @@ export default function NewContract() {
           })
       }
       else if(requestData.contract_type === "with-new-user" ){
-
-
-        ///test ///
-        setContractId('0328a86c-3715-40c9-89cb-55e028f2f587')
-        setIsQrModalOpen(true)
-
-
-        // await contractsService.createContract(requestData).then(() =>{
-        //   console.log('reqData',requestData)
-        //   setContractId(requestData.id)
-        //   setIsQrModalOpen(true)
-
-        //   })
+        await contractsService.createContract(requestData).then(() =>{
+          console.log('reqData',requestData)
+          setContractId(requestData.id)
+          setIsQrModalOpen(true)
+        })
       }
       else{
         await contractsService.createContract(requestData).then(() =>{
@@ -243,7 +267,7 @@ const addReceiver = (recipient: Recipient) => {
 };
 
 const removeReceiver = (index: number) => {
-
+  
     setSelectedReceivers(prev =>
     prev.filter((item, i) => {
         if (item.name.includes("NEW USER")) {
@@ -460,6 +484,30 @@ const addManualReceiver = () => {
                 ))}
             </div>
            )}
+          {/* Transaction Type */}
+          <div>
+            <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Transaction Type</div>
+            <div className="flex gap-3">
+              {[
+                { value: 'one-time' as TransactionType, label: 'One-Time Contract' },
+                { value: 'with-time-agreement' as TransactionType, label: 'With Time Agreement' },
+              ].map((type) => (
+                <motion.button
+                  key={type.value}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setTransactionType(type.value)}
+                  className={`flex-1 px-6 py-3 rounded-2xl text-sm font-medium transition-all border-2 ${
+                    transactionType === type.value
+                      ? 'border-purple-500 bg-purple-500/20 text-white'
+                      : 'border-white/20 bg-white/5 text-white/70'
+                  }`}
+                >
+                  {type.label}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
           {/* Split Agreement */}
           <div>
             <div className="text-xs text-white/60 mb-3 uppercase tracking-wider">Split Agreement</div>
@@ -656,7 +704,16 @@ const addManualReceiver = () => {
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSendContract}
-            disabled={(selectedReceivers.length === 0 && !receiverInput.trim()) || !startDateTime || !endDateTime || isLoading}
+            disabled={
+              (selectedReceivers.length === 0 && !receiverInput.trim()) || 
+              !participants ||
+              (splitType === 'percentage' && (!senderPercentage || Number(senderPercentage) <= 0)) ||
+              (splitType === 'amount' && (!senderAmount || Number(senderAmount) <= 0)) ||
+              (selectedReceivers.length > 0 && splitType === 'percentage' && receiverPercentages.filter(p => p && p > 0).length < selectedReceivers.length) ||
+              (selectedReceivers.length > 0 && splitType === 'amount' && receiverAmounts.filter(a => a && a > 0).length < selectedReceivers.length) ||
+              (transactionType === 'with-time-agreement' && (!startDateTime || !endDateTime)) || 
+              isLoading
+            }
             className="w-full py-5 rounded-3xl text-white font-semibold text-lg flex items-center justify-center gap-2 disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #8A00FF 0%, #5B4DFF 100%)' }}
           >
@@ -677,7 +734,10 @@ const addManualReceiver = () => {
         {/* QR Code Modal */}
         <Modal
           isOpen={isQrModalOpen}
-          onClose={() => setIsQrModalOpen(false)}
+          onClose={() => {
+            setIsQrModalOpen(false)
+            setContractId(null)
+          }}
           title="Contract QR Code"
         >
           <div className="flex flex-col items-center gap-4">
@@ -699,6 +759,7 @@ const addManualReceiver = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setIsQrModalOpen(false)
+                setContractId(null)
                 navigate('/app/contracts')
               }}
               className="w-full py-3 rounded-2xl text-white font-medium mt-2"

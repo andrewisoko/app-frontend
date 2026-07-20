@@ -170,7 +170,7 @@ export default function Home() {
         {/* Header with notification and profile */}
         <div className="flex items-center justify-end gap-4 px-6 pt-4 pb-2">
           <button 
-            onClick={() => navigate('/app/notification')}
+            onClick={() => navigate('/app/notifications')}
             className="text-white/70 hover:text-white transition-colors relative"
           >
             <Bell size={22} />

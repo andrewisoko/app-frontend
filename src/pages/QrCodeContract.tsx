@@ -3,14 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import ContractDetail from '@/components/contracts/ContractDetail'
-import { contractsService, ContractForm } from '@/services/contracts'
+import { contractsService, Contract } from '@/services/contracts'
 import PageTransition from '@/components/animations/PageTransition'
 
 
 export default function QrCodeContract() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [contract, setContract] = useState<ContractForm | null>(null)
+  const [contract, setContract] = useState<Contract | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

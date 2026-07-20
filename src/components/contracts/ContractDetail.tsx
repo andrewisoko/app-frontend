@@ -76,7 +76,7 @@ export default function ContractDetail({
         style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid rgba(75, 85, 99, 0.3)' }}
       >
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-400 font-mono">participants</span>
+          <span className="text-sm text-gray-400 font-mono">Participants</span>
           <span className="text-white font-medium">
             {contract.participants || 'N/A'}
           </span>
@@ -84,14 +84,14 @@ export default function ContractDetail({
 
         {contract.contract_type && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-400 font-mono">contract_type</span>
+            <span className="text-sm text-gray-400 font-mono">Contract Type</span>
             <span className="text-white font-medium">{contract.contract_type}</span>
           </div>
         )}
 
         {contract.transaction_type && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-400 font-mono">transaction_type</span>
+            <span className="text-sm text-gray-400 font-mono">Transaction Type</span>
             <span className="text-white font-medium">
               {contract.transaction_type === 'with-time-agreement' ? 'With Time Agreement' : contract.transaction_type}
             </span>
@@ -99,7 +99,7 @@ export default function ContractDetail({
         )}
 
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-400 font-mono">sender</span>
+          <span className="text-sm text-gray-400 font-mono">Sender</span>
           <span className="text-white font-medium">
             {contract.all_usernames?.[0] || 'Unknown Sender'}
           </span>
@@ -107,21 +107,21 @@ export default function ContractDetail({
 
         {contract.split_agreement && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-400 font-mono">split_agreement</span>
+            <span className="text-sm text-gray-400 font-mono">Split Agreement</span>
             <span className="text-purple-300 font-medium">{contract.split_agreement}</span>
           </div>
         )}
 
         {contract.sender_percentage !== undefined && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-400 font-mono">sender_percentage</span>
+            <span className="text-sm text-gray-400 font-mono">Sender Percentage</span>
             <span className="text-white font-medium">{contract.sender_percentage}%</span>
           </div>
         )}
 
         {contract.sender_amount !== undefined && contract.sender_amount !== null && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-400 font-mono">sender_amount</span>
+            <span className="text-sm text-gray-400 font-mono">Sender Amount</span>
             <span className="text-white font-medium">{formatAmount(contract.sender_amount)}</span>
           </div>
         )}
@@ -133,17 +133,17 @@ export default function ContractDetail({
           className="p-5 rounded-xl space-y-4"
           style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid rgba(75, 85, 99, 0.3)' }}
         >
-          <span className="text-xs font-bold text-neutral-300 font-mono block">time_agreement</span>
+          <span className="text-xs font-bold text-neutral-300 font-mono block">Time Agreement</span>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-xs text-gray-400 font-mono block mb-1">start</span>
+              <span className="text-xs text-gray-400 font-mono block mb-1">Start</span>
               <span className="text-sm text-white font-medium">
                 {fmtDateTime(parsed.start)}
               </span>
             </div>
             <div>
-              <span className="text-xs text-gray-400 font-mono block mb-1">end</span>
+              <span className="text-xs text-gray-400 font-mono block mb-1">End</span>
               <span className="text-sm text-white font-medium">
                 {fmtDateTime(parsed.end)}
               </span>
@@ -156,7 +156,7 @@ export default function ContractDetail({
       {contract.receiver && contract.receiver.length > 0 && (
         <div className="space-y-3">
           <span className="text-xs font-bold text-neutral-300 font-mono block">
-            receiver
+            Receiver
           </span>
 
           <div className="space-y-2">
@@ -172,18 +172,17 @@ export default function ContractDetail({
                 >
                   <div>
                     <span className="text-base font-bold text-white">{recUsername}</span>
-                    <p className="text-xs text-neutral-400 mt-0.5">Recipient Index {idx}</p>
                   </div>
 
                   <div className="text-right">
                     {contract.split_agreement === 'percentage' ? (
                       <div>
-                        <span className="text-[10px] font-bold text-neutral-400 font-mono block">receiver_percentage</span>
+                        <span className="text-[10px] font-bold text-neutral-400 font-mono block">Receiver Percentage</span>
                         <span className="text-lg font-bold text-purple-300">{recPercentage}%</span>
                       </div>
                     ) : (
                       <div>
-                        <span className="text-[10px] font-bold text-neutral-400 font-mono block">receiver_amount</span>
+                        <span className="text-[10px] font-bold text-neutral-400 font-mono block">Receiver Amount</span>
                         <span className="text-lg font-bold text-emerald-300">{formatAmount(recAmount)}</span>
                       </div>
                     )}
@@ -204,7 +203,7 @@ export default function ContractDetail({
             onClick={() => contract.id && onDecline?.(contract.id)}
             disabled={processingId === contract.id}
           >
-            <X size={20} />
+            <X className='ml-5' size={20} />
             Decline Contract
           </button>
           <button
@@ -213,7 +212,7 @@ export default function ContractDetail({
             onClick={() => contract.id && onAccept?.(contract.id)}
             disabled={processingId === contract.id}
           >
-            <Check size={20} />
+            <Check className='ml-5' size={20} />
             Accept Contract
           </button>
         </div>

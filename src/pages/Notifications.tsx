@@ -63,7 +63,7 @@ export function Notifications(){
 
 <PageTransition>
     
-<div className="min-h-screen bg-[#24134d] p-6">
+<div className="min-h-screen p-6">
     <h1 className="text-3xl font-bold text-white mb-6">
         Notifications
     </h1>
@@ -74,7 +74,7 @@ export function Notifications(){
         </div>
     ) : notifications.length === 0 ? (
 
-        <div className="text-gray-300">
+        <div className="flex justify-center mt-40 text-gray-300">
             No notifications
         </div>
     ) : (

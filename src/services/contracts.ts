@@ -29,9 +29,9 @@ export interface ContractForm{
     sender_amount: number | null;
     receiver_percentage: number[];
     receiver_amount: number[];
-    repayment_agreement:string,
-    event_agreement:string,
-    location_agreement:string,
+    repayment_agreement?:string,
+    event_agreement?:string,
+    location_agreement?:string,
 } 
 
 
