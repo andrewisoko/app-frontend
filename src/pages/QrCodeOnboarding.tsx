@@ -39,7 +39,10 @@ export default function QrCodeOnboarding() {
     useEffect(() => {
       if (isAuthenticated) {
         navigate('/app/qr-code/loading-new-profile',
-          {replace:true})
+          {
+            replace:true,
+            state: { bank: selectedBankName }
+          })
       }
       if (! contractId) return;
 
@@ -48,7 +51,7 @@ export default function QrCodeOnboarding() {
         setContract(currentContract)
       }
       findContract()
-    }, [isAuthenticated,navigate])
+    }, [isAuthenticated,navigate,selectedBankName])
 
 
   //////////////////////////
@@ -104,13 +107,8 @@ export default function QrCodeOnboarding() {
       }
 
    try {
-      await contractsService.newAUserQRcode({
-          contractId,
-          decision:true,
-          amount:amount,
-          bank:bank
-      })
-      const response = await authService.newAUserFromQRcode({ contractId, decision:true ,amount,bank })
+  
+      const response = await authService.newAUserFromQRcode({ contractId, decision : true ,amount,bank })
       qrCodeSignIn(response.token,response.user)
       // navigate('/app/qr-code/loading-new-profile',{
       //   state:{ bank: bank}
@@ -151,7 +149,9 @@ export default function QrCodeOnboarding() {
 
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col items-center justify-center p-0 md:p-6 lg:p-12 antialiased selection:bg-neutral-900 selection:text-white" id="main-container">
-        { contract?.contract_status ==="accepted" ?(
+        { !contract ? (
+          <div className="text-neutral-600 text-sm py-4">Loading contract...</div>
+        ) : contract?.contract_status ==="pending" ?(
 
             <AnimatePresence mode="wait">
               {/* STEP 1: INPUT CONTROLS SCREEN */}
@@ -331,7 +331,9 @@ export default function QrCodeOnboarding() {
               </div>
             </AnimatePresence>
         ):(
-           <div className="text-white/60 text-sm py-4">No recipients found</div>
+           <div className="min-h-screen flex items-center justify-center">
+             <div className="text-neutral-600 text-sm py-4">This contract has already been processed</div>
+           </div>
         )}
 
     </div>

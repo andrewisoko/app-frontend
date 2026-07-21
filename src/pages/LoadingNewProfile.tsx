@@ -18,7 +18,7 @@ export default function  LoadingNewProfile(){
 
     const navigate = useNavigate()
     const [progress, setProgress] = useState<number>(0);
-    const [step, setStep] = useState<'input' | 'processing' | 'dashboard'>('input');
+    const [step, setStep] = useState<'input' | 'processing' | 'dashboard'>('processing');
     const [processingMessage, setProcessingMessage] = useState<string>('Connecting to your bank...');
     const location = useLocation();
     const bank = (location.state as { bank: string } | null)?.bank;
@@ -70,13 +70,14 @@ useEffect(() => {
 }, [progress, step]);
 
     return(
+<div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 flex items-center justify-center p-6">
 <motion.div 
     key="processing-view"
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 1.05 }}
     transition={{ duration: 0.4 }}
-    className="flex-1 flex flex-col justify-between py-6 text-white"
+    className="flex-1 flex flex-col justify-between py-6 text-white max-w-md w-full"
   >
     <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
       
@@ -189,5 +190,6 @@ useEffect(() => {
       <span>FCA Cryptographic Transfer Gate</span>
     </div>
   </motion.div>
+</div>
     )
 }
