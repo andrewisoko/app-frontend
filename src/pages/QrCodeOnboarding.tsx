@@ -36,22 +36,26 @@ export default function QrCodeOnboarding() {
   //////////////////////////
   //////////////////////////
 
+    // Effect for navigation when authenticated
     useEffect(() => {
       if (isAuthenticated) {
-        navigate('/app/qr-code/loading-new-profile',
-          {
-            replace:true,
-            state: { bank: selectedBankName }
-          })
+        navigate('/app/qr-code/loading-new-profile', {
+          replace: true,
+          state: { bank: selectedBankName }
+        });
       }
-      if (! contractId) return;
+    }, [isAuthenticated, navigate, selectedBankName]);
+
+    // Effect for fetching contract on mount
+    useEffect(() => {
+      if (!contractId) return;
 
       const findContract = async () => {
-        const currentContract = await contractsService.getContract(contractId)
-        setContract(currentContract)
-      }
-      findContract()
-    }, [isAuthenticated,navigate,selectedBankName])
+        const currentContract = await contractsService.getContract(contractId);
+        setContract(currentContract);
+      };
+      findContract();
+    }, [contractId]);
 
 
   //////////////////////////
@@ -95,28 +99,38 @@ export default function QrCodeOnboarding() {
 
   };
 
-  const handleSubmit = async (
-      contractId:string,
-      amount:number,
-      bank:string
+  const handleSubmit = async () => {
+    // Validate amount
+    if (!amount || parseFloat(amount) <= 0) {
+      setValidationError('Please enter a valid amount');
+      return;
+    }
 
-  ) => {
-     if (!contractId) {
-        setValidationError('Missing contract ID')
-        return
-      }
+    // Validate bank selection
+    if (!selectedBankName) {
+      setValidationError('Please select a bank');
+      return;
+    }
 
-   try {
-  
-      const response = await authService.newAUserFromQRcode({ contractId, decision : true ,amount,bank })
-      qrCodeSignIn(response.token,response.user)
-      // navigate('/app/qr-code/loading-new-profile',{
-      //   state:{ bank: bank}
-      // })
-      console.log('contract accepted', contractId)
-      } catch (error) {
-          console.log('QR code contract accepted', error)
-      }
+    // Validate contract ID
+    if (!contractId) {
+      setValidationError('Missing contract ID');
+      return;
+    }
+
+    try {
+      const response = await authService.newAUserFromQRcode({ 
+        contractId, 
+        decision: true,
+        amount: parseFloat(amount),
+        bank: selectedBankName
+      });
+      qrCodeSignIn(response.token, response.user);
+      console.log('contract accepted', contractId);
+    } catch (error) {
+      console.log('QR code contract acceptance error:', error);
+      setValidationError('Failed to process contract. Please try again.');
+    }
   }
 
   /////////////////////////
@@ -136,7 +150,7 @@ export default function QrCodeOnboarding() {
 
 
   // Quick references
-  const currentSelectedBank = SUPPORTED_BANKS.find(b => b.id === selectedBankName);
+  const currentSelectedBank = SUPPORTED_BANKS.find(b => b.name === selectedBankName);
 
   // Auto-size typography logic depending on length of amount
   const getAmountFontSize = () => {
@@ -313,11 +327,7 @@ export default function QrCodeOnboarding() {
 
                       {/* Submit Button */}
                       <button
-                        onClick={() => handleSubmit(
-                          contractId ?? '',
-                          Number(amount),
-                          selectedBankName ?? ''
-                        )}
+                        onClick={handleSubmit}
                         className="w-full bg-neutral-950 hover:bg-neutral-900 text-white font-medium py-4 px-6 rounded-2xl transition-all duration-200 active:scale-[0.98] shadow-sm flex items-center justify-center gap-2 font-sans hover:shadow-md cursor-pointer"
                         id="submit-onboarding-btn"
                       >
